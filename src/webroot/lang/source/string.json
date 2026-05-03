@@ -111,5 +111,17 @@
 
   "role_founder_dev": "Founder & Developer",
   "role_contributor_dev": "Module Developer",
-  "role_contributor_webui": "WebUI Developer"
+  "role_contributor_webui": "WebUI Developer",
+
+  "menu_custom_keybox": "Set Custom Keybox",
+  "menu_custom_keybox_desc": "Use your own keybox file, URL, or device path",
+  "custom_kb_title": "Custom Keybox",
+  "custom_kb_file": "From File",
+  "custom_kb_url": "From URL / Path",
+  "custom_kb_browse": "Browse Files",
+  "custom_kb_no_file": "No file selected",
+  "custom_kb_apply": "Apply",
+  "custom_kb_clear": "Clear",
+  "custom_kb_applied": "Custom keybox configured",
+  "custom_kb_cleared": "Custom keybox cleared"
 }

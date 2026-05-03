@@ -25,10 +25,10 @@
       document.documentElement.style.colorScheme = resolved;
     })();
   </script>
-  <script type="module" crossorigin src="./assets/index-DlH3uSa1.js"></script>
+  <script type="module" crossorigin src="./assets/index-cLI4OT1N.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/rolldown-runtime-lhHHWwHU.js">
   <link rel="modulepreload" crossorigin href="./assets/bridge-BHYUl5TK.js">
-  <link rel="stylesheet" crossorigin href="./assets/index-BVC7xH-1.css">
+  <link rel="stylesheet" crossorigin href="./assets/index-z8_fUWAi.css">
 </head>
 <body>
   <div class="app-layout">
@@ -112,14 +112,34 @@
 
           <div class="list-title" data-i18n="menu_keybox">Keybox</div>
           <div class="list-container">
-            <div class="list-item" data-script="keybox.sh">
-              <md-icon>key</md-icon>
+            <div class="list-item" data-script="keybox.sh" style="flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:12px;width:100%;padding:12px 16px 4px;box-sizing:border-box">
+                <md-icon>key</md-icon>
+                <div class="list-item-content">
+                  <div class="toggle-text" data-i18n="menu_import_keybox">Install Keybox</div>
+                  <span class="supporting-text" data-i18n="menu_import_keybox_desc">Downloads and installs remote keybox to Tricky Store</span>
+                </div>
+                <div class="spacer"></div>
+                <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+                <md-ripple></md-ripple>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;width:100%;padding:0 16px 8px 66px;box-sizing:border-box">
+                <md-outlined-select id="kb-provider" style="width:160px">
+                  <md-select-option value="auto" selected><div slot="headline">Auto</div></md-select-option>
+                </md-outlined-select>
+                <span class="supporting-text" style="font-size:0.72rem">Provider</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="list-container" style="margin-top:-8px">
+            <div class="list-item" id="custom-keybox-btn" style="cursor:pointer">
+              <md-icon>settings</md-icon>
               <div class="list-item-content">
-                <div class="toggle-text" data-i18n="menu_import_keybox">Install Keybox</div>
-                <span class="supporting-text" data-i18n="menu_import_keybox_desc">Downloads and installs remote keybox to Tricky Store</span>
+                <div class="toggle-text" data-i18n="menu_custom_keybox">Set Custom Keybox</div>
+                <span class="supporting-text" data-i18n="menu_custom_keybox_desc">Use your own keybox file, URL, or device path</span>
               </div>
               <div class="spacer"></div>
-              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
               <md-ripple></md-ripple>
             </div>
           </div>

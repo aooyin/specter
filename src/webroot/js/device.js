@@ -124,8 +124,9 @@ function applyKeyboxStatus(data) {
 
   statusEl.style.display = '';
 
-  if (data.by_yuri) {
-    const label = data.yuri_version ? `Keybox v${data.yuri_version}` : 'Keybox';
+  if (data.source) {
+    const name = data.source.charAt(0).toUpperCase() + data.source.slice(1);
+    const label = data.source_version ? `${name} v${data.source_version}` : name;
     if (data.up_to_date) {
       source.textContent = label + ' \u00B7 Latest';
       source.className = 'keybox-chip keybox-chip--yuri';

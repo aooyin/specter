@@ -10,26 +10,22 @@ INFO_PATH="$MODDIR/../webroot/json/keybox_info.json"
 ensure_dir "$(dirname "$INFO_PATH")"
 
 _installed=false
-_by_yuri=false
-_yuri_version=""
-_latest_version=""
+_source=""
+_source_version=""
 _up_to_date=false
 _revoked=false
 
 # Extract serial number from hex-encoded DER certificate
 _parse_serial() {
   _h="$1"
-  # Skip outer SEQUENCE (30) + length
   case "$_h" in 30*) _h="${_h#30}" ;; *) return 1 ;; esac
   _l_hex="${_h:0:2}" _l_dec=$((16#$_l_hex))
   [ $_l_dec -ge 128 ] && _h="${_h:2 + ($_l_dec - 128) * 2}" || _h="${_h:2}"
 
-  # Skip TBS SEQUENCE (30) + length
   case "$_h" in 30*) _h="${_h#30}" ;; *) return 1 ;; esac
   _l_hex="${_h:0:2}" _l_dec=$((16#$_l_hex))
   [ $_l_dec -ge 128 ] && _h="${_h:2 + ($_l_dec - 128) * 2}" || _h="${_h:2}"
 
-  # Skip optional version CONTEXT [0]
   case "$_h" in
     a0*)
       _ctx_len_hex="${_h:2:2}"
@@ -38,7 +34,6 @@ _parse_serial() {
       ;;
   esac
 
-  # Parse INTEGER serial
   case "$_h" in 02*) _h="${_h#02}" ;; *) return 1 ;; esac
   _l_hex="${_h:0:2}" _l_dec=$((16#$_l_hex))
   if [ $_l_dec -ge 128 ]; then
@@ -62,51 +57,28 @@ if [ -f "$KEYBOX_FILE" ]; then
     log "KEYBOX_INFO" "Serial: $_serial"
 
     if check_network; then
-      _history_json=$(download "$HISTORY_URL" 2>/dev/null)
+      _history_json=$(download "$CATALOG_URL" 2>/dev/null)
       log "KEYBOX_INFO" "History response length: ${#_history_json}"
 
       if [ -n "$_history_json" ]; then
+        # Find matching entry by serial
         _match=$(echo "$_history_json" | grep -o '"serial":"'"$_serial"'"')
         if [ -n "$_match" ]; then
-          _by_yuri=true
-          _yuri_version=$(echo "$_history_json" | grep -o '"version":"[^"]*"[^}]*"serial":"'"$_serial"'"' | sed 's/.*"version":"\([^"]*\)".*/\1/')
-          [ -z "$_yuri_version" ] && _yuri_version="?"
-          _latest_version=$(echo "$_history_json" | grep -o '"latest":"[^"]*"' | sed 's/"latest":"//;s/"//')
-          if [ -z "$_latest_version" ]; then
-            # Old server format — compute from entries
-            _latest_version=$(echo "$_history_json" | grep -o '"version":"[0-9]*"' | sed 's/"version":"//;s/"//' | sort -rn | head -1)
-          fi
-          log "KEYBOX_INFO" "Found in history: version $_yuri_version, latest: $_latest_version"
+          _source=$(echo "$_history_json" | grep -o '"source":"[^"]*"[^}]*"serial":"'"$_serial"'"' | sed 's/.*"source":"\([^"]*\)".*/\1/')
+          _source_version=$(echo "$_history_json" | grep -o '"version":"[^"]*"[^}]*"serial":"'"$_serial"'"' | sed 's/.*"version":"\([^"]*\)".*/\1/')
+          _revoked=$(echo "$_history_json" | grep -o '"revoked":\(true\|false\)[^}]*"serial":"'"$_serial"'"' | sed 's/.*"revoked":\(true\|false\).*/\1/')
+          [ -z "$_source" ] && _source="yuri"
+          [ -z "$_source_version" ] && _source_version="?"
+          [ -z "$_revoked" ] && _revoked=false
+          log "KEYBOX_INFO" "Found: source=$_source version=$_source_version revoked=$_revoked"
 
-          if [ -n "$_yuri_version" ] && [ "$_yuri_version" = "$_latest_version" ]; then
+          # Check if up-to-date by comparing with latest for this source
+          _latest_for_source=$(echo "$_history_json" | grep -o '"'"$_source"'":"[0-9]*"' | sed 's/.*":"//;s/"//')
+          if [ -n "$_source_version" ] && [ "$_source_version" = "$_latest_for_source" ]; then
             _up_to_date=true
-          else
-            _revoked=true
           fi
-        fi
-
-        # Check Google for: latest Yuri (not auto-revoked) or non-Yuri
-        if [ "$_by_yuri" = false ] || [ "$_up_to_date" = true ]; then
-          [ "$_by_yuri" = true ] && _revoked=false && log "KEYBOX_INFO" "Latest Yuri, checking Google"
-          [ "$_by_yuri" = false ] && log "KEYBOX_INFO" "Not in history, checking Google"
-
-          _revoked_list=$(download "$GOOGLE_REVOCATION_URL" 2>/dev/null)
-          if [ -n "$_revoked_list" ]; then
-            # Try matching hex serial as decimal (Google uses decimal keys)
-            _serial_dec=""
-            if [ ${#_serial} -le 16 ]; then
-              _serial_dec=$((16#$_serial))
-            elif command -v bc >/dev/null 2>&1; then
-              _serial_dec=$(echo "ibase=16; $(echo "$_serial" | tr 'a-f' 'A-F')" | bc | tr -d '\\\n')
-            fi
-            if [ -n "$_serial_dec" ] && echo "$_revoked_list" | grep -q "$_serial_dec"; then
-              _revoked=true; log "KEYBOX_INFO" "REVOKED by Google"
-            elif echo "$_revoked_list" | grep -qi "$_serial"; then
-              _revoked=true; log "KEYBOX_INFO" "REVOKED by Google (hex match)"
-            fi
-          else
-            log "KEYBOX_INFO" "Google response empty, skipping"
-          fi
+        else
+          log "KEYBOX_INFO" "Not found in history"
         fi
       fi
     else
@@ -118,12 +90,12 @@ fi
 cat <<EOF > "$INFO_PATH"
 {
   "installed": $_installed,
-  "by_yuri": $_by_yuri,
-  "yuri_version": "$(_escape_json "$_yuri_version")",
+  "source": "$(_escape_json "$_source")",
+  "source_version": "$(_escape_json "$_source_version")",
   "up_to_date": $_up_to_date,
   "revoked": $_revoked
 }
 EOF
 
-unset _installed _by_yuri _yuri_version _up_to_date _revoked _b64 _hex _serial _serial_hex _history_json _match _revoked_list _latest_version _serial_dec _ctx_len_hex _ctx_len _l_hex _l_dec _n _sl
+unset _installed _source _source_version _up_to_date _revoked _b64 _hex _serial _serial_hex _history_json _match _ctx_len_hex _ctx_len _l_hex _l_dec _n _sl _latest_for_source
 exit 0
