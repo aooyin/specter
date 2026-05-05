@@ -803,8 +803,10 @@ md-divider.settings-divider {
   white-space: nowrap;
 }
 
-.nav-tab:hover {
-  background: rgba(0, 0, 0, 0.04);
+@media (hover: hover) {
+  .nav-tab:hover {
+    background: rgba(0, 0, 0, 0.04);
+  }
 }
 
 .nav-tab--active {
@@ -1027,8 +1029,10 @@ md-filled-tonal-button {
   color: var(--md-sys-color-on-surface);
 }
 
-[data-theme-resolved="dark"] .nav-tab:hover {
-  background: rgba(255, 255, 255, 0.06);
+@media (hover: hover) {
+  [data-theme-resolved="dark"] .nav-tab:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
 }
 
 .terminal {
