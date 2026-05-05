@@ -19,7 +19,7 @@ find src/ -name '*.sh' -exec shellcheck {} +
 | `src/lib/` | Shared shell libraries — single source of truth |
 | `src/features/` | One file = one feature, run by orchestrator |
 | `src/pipelines/` | Text files listing features to run in order |
-| `src/webroot/js/` | WebUI ES modules (17 files, Vite-bundled) |
+| `src/webroot/js/` | WebUI ES modules (20 files, Vite-bundled) |
 | `src/webroot/common/` | Scripts triggered from WebUI directly |
 | `src/rka/` | Remote Key Attestation (jsonarray.sh) |
 | `Module/` | **Build output — never edit directly** |
@@ -33,7 +33,7 @@ find src/ -name '*.sh' -exec shellcheck {} +
 | `features/*.sh` | `exit` (run as subprocess) |
 | `orchestrator.sh`, `service.sh`, `boot-completed.sh` | `exit` |
 | `customize.sh`, `uninstall.sh` | `return` (sourced by installer) |
-| `action.sh` | Context detection: `"${0##*/}" = "action.sh" && exit 0 \|\| return 0` |
+| `action.sh` | `exit` (standalone — Magisk/KSU runs as subprocess) |
 | `lib/*.sh` | Never call `exit` or `return` at top level |
 
 ### Path Resolution
@@ -48,6 +48,7 @@ find src/ -name '*.sh' -exec shellcheck {} +
 
 ```sh
 #!/system/bin/sh
+set -e
 MODDIR=${0%/*}
 . "$MODDIR/../lib/common.sh"
 . "$MODDIR/../lib/paths.sh"
@@ -59,8 +60,9 @@ exit 0
 ```
 
 - End every feature script with `exit 0`
+- All executable scripts use `set -e` — intentionally failing commands must use `|| true`
 - Never `exit 1` without a `log "ERROR"` message first
-- Check prerequisites with `check_network`, `check_module`, `[ -f ... ]` before doing work
+- Check prerequisites with `check_network`, `[ -f ... ]` before doing work
 
 ## Git Conventions
 

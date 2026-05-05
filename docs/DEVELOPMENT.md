@@ -6,32 +6,28 @@ For full architecture reference, see [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 | Area | Files | Lines |
 |---|---|---|
-| `src/lib/` | 5 shared libraries | 193 total |
+| `src/lib/` | 5 shared libraries | ~340 total |
 | `src/features/` | 16 feature scripts | varies |
-| `src/webroot/js/` | 17 ES modules | 1550 total |
-| `src/webroot/css/app.css` | 1 stylesheet | 790 |
-| `src/webroot/index.html` | 1 HTML page | 458 |
+| `src/webroot/js/` | 20 ES modules | ~2100 total |
+| `src/webroot/css/app.css` | 1 stylesheet | ~790 |
+| `src/webroot/index.html` | 1 HTML page | ~460 |
 
 ## WebUI Architecture
 
 ### Bridge (`src/webroot/js/bridge.js`)
 
-3-tier fallback to execute shell commands:
+Single bridge tier: `window.ksu.exec` — KernelSU/APatch native bridge. Spawn support via `window.ksu.spawn` if available, else emulated via raw exec.
 
-1. `window.ksu.exec` — KernelSU/APatch native bridge
-2. `window.ksu-native.execScript` — Magisk via MMRL
-3. `KernelSU/APatch native bridge` — legacy MMRL fallback
-
-Returns an event emitter with `on('data')` and `on('exit')` for live streaming to the terminal.
+Returns an event emitter with `on('data')` and `on('exit')` for live streaming to the terminal. `exec()` returns `{ stdout, stderr }` for simple commands.
 
 ### Config Persistence (`src/webroot/js/cfg.js`)
 
 ```js
 cfgGet(key, default)     # ksud module config get → cat config/*.val
-cfgSet(key, value)       # ksud module config set → printf > config/*.val
+cfgSet(key, value)       # ksud module config set → printf > config/*.val (batched + debounced)
 ```
 
-Mirrors `lib/config_env.sh` on the shell side. On first load, migrates legacy `localStorage` settings.
+Mirrors `lib/config_env.sh` on the shell side. Uses single-quote shell escaping to prevent injection. Batches writes with 500ms debounce timer.
 
 ### Script Execution (`src/webroot/js/app.js`)
 
@@ -41,7 +37,7 @@ Two modes:
 
 ### Theme (`src/webroot/js/theme.js`)
 
-MWC Material 3 via CSS custom properties. 5 color presets (ocean, rose, forest, sunset, violet). Auto dark/light detection. Monet dynamic colors from wallpaper (Android 12+).
+MWC Material 3 via CSS custom properties. 8 color presets (blue, yellow, red, purple, green, orange, pink, cyan, grey). Auto dark/light detection. Monet dynamic colors from wallpaper (Android 12+).
 
 ## Pipeline System
 
@@ -57,8 +53,15 @@ keybox.sh
 pif.sh?
 ```
 
+```
+# src/pipelines/root_hide
+hma.sh
+zygisk_next.sh?
+```
+
 - `?` suffix = optional (skipped if file missing, pipeline continues)
 - Any script exiting non-zero **aborts** the pipeline
+- Feature names are sanitized against `[!/a-zA-Z0-9_-]` before execution
 - The `orchestrator.sh` reads the pipeline file line by line
 
 To create a new pipeline: write a text file in `src/pipelines/`, then call `sh orchestrator.sh <name>`.
@@ -71,10 +74,11 @@ KernelSU / APatch:
   boot-completed.sh  → apply_boot_hardening(), override.description
 
 Magisk:
-  service.sh         → ro.* resets + poll sys.boot_completed + apply_boot_hardening()
+  service.sh         → ro.* resets + poll sys.boot_completed + GMS kill
+                       + recovery hiding + 120s delayed re-spoof
 ```
 
-The `apply_boot_hardening()` function (in `lib/common.sh`) runs `settings put` and `resetprop --delete` for security hardening. Extracted as function because it's called from 3 places.
+The `apply_boot_hardening()` function (in `lib/common.sh`) runs `settings put` and `resetprop --delete` for security hardening.
 
 ## Config Persistence (`lib/config_env.sh`)
 
@@ -95,6 +99,10 @@ check_network || { log "FEATURE" "Error: No internet"; exit 1; }
 [ -d "/data/adb/tricky_store" ] || { log "FEATURE" "Error: Tricky Store not found"; exit 1; }
 ```
 
+### set -e
+
+All executable scripts use `set -e`. Commands whose failure is expected must be guarded with `|| true`.
+
 ### Logging
 
 Use the `log()` function from `lib/common.sh`:
@@ -105,7 +113,7 @@ log "FEATURE" "Downloading..."
 log "FEATURE" "Finish"
 ```
 
-Format: `2026-05-02 12:00:00 [FEATURE] message`
+Format: `[FEATURE] message`
 
 ## RKA Subsystem
 
