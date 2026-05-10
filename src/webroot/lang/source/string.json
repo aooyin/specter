@@ -167,5 +167,37 @@
   "control_toggle_action_pif_desc": "Run Play Integrity Fix auto-update scripts",
 
   "control_conflicts_title": "Conflict Resolution",
-  "control_conflicts_desc": "Toggle ON = module handles it. Toggle OFF = Specter handles it. Remove conflicting modules from your root manager if you encounter issues."
+  "control_conflicts_desc": "Toggle ON = module handles it. Toggle OFF = Specter handles it. Remove conflicting modules from your root manager if you encounter issues.",
+
+  "home_keybox_status": "Keybox Status",
+  "home_keybox_history": "History",
+  "nav_main_aria": "Main navigation",
+  "kb_provider_auto": "Auto",
+  "kb_url_placeholder": "https://example.com/keybox.xml or /sdcard/keybox.xml",
+  "kb_paste_aria": "Paste from clipboard",
+  "custom_kb_desc": "Paste a download URL or enter a device path",
+  "toast_enter_url": "Enter a URL or device path",
+  "toast_detect_failed": "Failed to detect keybox",
+  "toast_blacklist_saved": "Blacklist saved",
+  "toast_blacklist_reset": "Blacklist reset to defaults",
+  "toast_smartmerge_saved": "SmartMerge saved",
+  "toast_recovery_on": "Recovery hiding enabled",
+  "toast_recovery_off": "Recovery hiding disabled",
+  "toast_failed_update": "Failed to update",
+  "device_tee_sim": "TEE Sim",
+  "device_not_installed": "Not Installed",
+  "device_private_keybox": "Private Keybox",
+  "device_latest": "Latest",
+  "device_generic": "Generic",
+  "time_today": "Today at",
+  "time_yesterday": "Yesterday at",
+  "time_at": " at ",
+  "history_copy": "Copy",
+  "history_copied": "Copied!",
+  "history_copy_failed": "Failed",
+
+  "file_browser_empty": "No XML files found",
+  "file_browser_show_all": "Show all files",
+  "conflict_toast_module_handles": "Module handles it",
+  "conflict_toast_specter_handles": "Specter handles it"
 }

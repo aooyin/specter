@@ -73,12 +73,12 @@ if [ -z "$_history" ]; then
   _valid=""
   for _i in 0 1 2 3 4 5 6 7 8 9; do
     _url="$_FALLBACK_BASE/keybox$_i"
-    if wget --spider "$_url" 2>/dev/null || curl --output /dev/null --silent --head --fail "$_url"; then
+    if { command -v wget >/dev/null 2>&1 && wget --spider "$_url" 2>/dev/null; } || { command -v curl >/dev/null 2>&1 && curl --output /dev/null --silent --head --fail "$_url" 2>/dev/null; }; then
       _valid="$_valid $_i"
     fi
   done
   if [ -n "$_valid" ]; then
-    _pick=$(echo "$_valid" | tr ' ' '\n' | sort -R | head -1)
+    _pick=$(echo "$_valid" | tr ' ' '\n' | awk 'BEGIN{srand()} {print rand(), $0}' | sort -n | head -1 | cut -d' ' -f2)
     _DL_SOURCE="fallback"
     _DL_VER="keybox$_pick"
     log "KEYBOX" "Fallback selected: $_DL_VER"

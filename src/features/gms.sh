@@ -26,9 +26,9 @@ for _pkg in $GMS_KILL_LIST; do
 done
 
 if echo "$_installed_pkgs" | grep -q "package:com.android.vending"; then
-  log "GMS" "Trimming Play Store cache..."
-  cmd package trim-caches 999999999 com.android.vending >/dev/null 2>&1 || log "GMS" "Warning: Failed to clear Play Store cache"
-  log "GMS" "Play Store cache trimmed"
+  log "GMS" "Clearing Play Store data..."
+  pm clear com.android.vending >/dev/null 2>&1 || log "GMS" "Warning: Failed to clear Play Store data"
+  log "GMS" "Play Store data cleared"
 fi
 unset _installed_pkgs
 

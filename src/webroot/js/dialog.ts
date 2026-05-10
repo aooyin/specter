@@ -1,4 +1,5 @@
 import { escapeHtml } from './utils.js';
+import { getTranslation } from './i18n.js';
 
 export function showErrorDialog(title: string, content: string) {
   const dialog = document.createElement('md-dialog');
@@ -9,7 +10,7 @@ export function showErrorDialog(title: string, content: string) {
       <div class="terminal"><pre>${escapeHtml(content)}</pre></div>
     </div>
     <div slot="actions">
-      <md-text-button class="error-dialog-close">Close</md-text-button>
+      <md-text-button class="error-dialog-close">${getTranslation('dialog_close') || 'Close'}</md-text-button>
     </div>
   `;
   document.body.appendChild(dialog);

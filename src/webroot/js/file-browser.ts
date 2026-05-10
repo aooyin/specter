@@ -41,9 +41,9 @@ export async function openFileBrowser(onSelect: (path: string) => void) {
       <div slot="content" class="fb-content">
         ${currentPath !== '/' && currentPath !== '/sdcard' ? rowHTML('..', 'folder_open', '..', true, false) : ''}
         ${dirs.map(d => rowHTML(d.path, 'folder', d.name, true, false)).join('')}
-        ${files.length === 0 && dirs.length === 0 ? '<div class="fb-empty">No XML files found</div>' : ''}
+        ${files.length === 0 && dirs.length === 0 ? '<div class="fb-empty">' + (getTranslation('file_browser_empty') || 'No XML files found') + '</div>' : ''}
         ${files.map(f => rowHTML(f.path, 'description', f.name, false, selectedFile === f.path)).join('')}
-        ${!allFiles && files.length < entries.length ? '<div class="fb-show-all"><span id="fb-show-all">Show all files</span></div>' : ''}
+        ${!allFiles && files.length < entries.length ? '<div class="fb-show-all"><span id="fb-show-all">' + (getTranslation('file_browser_show_all') || 'Show all files') + '</span></div>' : ''}
       </div>
       <div slot="actions" class="fb-actions">
         <md-text-button id="fb-cancel">${t('dialog_close', 'Close')}</md-text-button>

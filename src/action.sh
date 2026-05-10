@@ -19,10 +19,10 @@ _feature_enabled toggle_action_target && sh "$MODDIR/features/target.sh" 2>/dev/
 _feature_enabled toggle_action_security_patch && sh "$MODDIR/features/security_patch.sh" 2>/dev/null || true
 _feature_enabled toggle_action_boot_hash && sh "$MODDIR/features/boot_hash.sh" 2>/dev/null || true
 sh "$MODDIR/features/keybox.sh" 2>/dev/null || true
-_feature_enabled toggle_action_pif && sh "$MODDIR/features/pif.sh" 2>/dev/null || true
+[ "$(cfg_get toggle_action_pif 0)" != "0" ] && sh "$MODDIR/features/pif.sh" 2>/dev/null || true
 
 run_device_info "$MODDIR"
 
-log "ACTION" "Meets Strong Integrity with Specter"
+log "ACTION" "Full integrity pipeline completed"
 
 [ "${0##*/}" = "action.sh" ] && exit 0 || return 0

@@ -4,7 +4,6 @@ MODDIR=${0%/*}
 . "$MODDIR/../lib/common.sh"
 . "$MODDIR/../lib/paths.sh"
 . "$MODDIR/../lib/config_env.sh"
-[ "$(cfg_get toggle_boot_hash 1)" = "0" ] && exit 0
 
 log "BOOT_HASH" "Start"
 
@@ -13,9 +12,6 @@ _boot_hash=""
 if [ -f "/sdcard/Specter/boot_hash" ] 2>/dev/null; then
   _boot_hash=$(tr -cd '0-9a-fA-F' < "/sdcard/Specter/boot_hash" 2>/dev/null)
   log "BOOT_HASH" "User config: /sdcard/Specter/boot_hash"
-elif [ -f "$BOOT_HASH_FILE" ] 2>/dev/null; then
-  _boot_hash=$(tr -cd '0-9a-fA-F' < "$BOOT_HASH_FILE" 2>/dev/null)
-  log "BOOT_HASH" "Stored hash: $BOOT_HASH_FILE"
 else
   if command -v sha256sum >/dev/null 2>&1 && command -v blockdev >/dev/null 2>&1; then
     _vbmeta_out=$(read_vbmeta 2>/dev/null || echo "")
@@ -32,6 +28,10 @@ else
       unset _vbsize _vbhash
     fi
     unset _vbmeta_out
+  fi
+  if [ -z "$_boot_hash" ] && [ -f "$BOOT_HASH_FILE" ] 2>/dev/null; then
+    _boot_hash=$(tr -cd '0-9a-fA-F' < "$BOOT_HASH_FILE" 2>/dev/null)
+    log "BOOT_HASH" "Stored hash (fallback): $BOOT_HASH_FILE"
   fi
 fi
 

@@ -1,5 +1,64 @@
 # Specter Changelog
 
+## v1.2.1
+
+### download() / Network
+- Swapped priority: **wget first, curl fallback** — wget ships with Android (toybox), curl does not. Reduces unnecessary errors and timeouts on devices without curl.
+- `check_network()` also updated to try wget first for consistency.
+
+### Keybox Script Fixes
+- **Unguarded curl in fallback probe** (`keybox.sh:76`): added `command -v` guard + `2>/dev/null` to both curl and wget calls. Previously, `2>/dev/null` only covered wget and curl had no existence check — shell would print `curl: inaccessible or not found` on devices without curl.
+- **`sort -R` removed** (`keybox.sh:81`): `sort -R` is a GNU extension, not available on busybox/toybox Android builds. Replaced with POSIX-compatible `awk` random selection.
+- **Custom keybox detection** (`app.ts:552`): hardcoded curl in the shell command string replaced with wget-first fallback — same priority pattern as `download()`.
+
+### Play Store Clear Data
+- **`kill_play_store.sh`** and **`gms.sh`**: replaced `cmd package trim-caches 999999999 com.android.vending` with `pm clear com.android.vending`.
+- `trim-caches` only accepts a size argument (ignores package name) and only clears system cache files — never touches app data. `pm clear` actually deletes the app's private data, forcing Play Store to re-register the device after a keybox swap.
+
+### Installer (customize.sh)
+- **Timeout on all vol-key prompts**: each prompt now defaults after 8 seconds of no input — skip keybox install, skip target.txt generation, default to Specter priority for module conflicts. Uses `timeout` (toybox) to poll `getevent` at 1-second intervals.
+- **Download timeout guard**: keybox download wrapped in background + kill loop with 30-second hard cap — prevents endless waits if network hangs.
+- **Target.txt prompt**: new prompt after keybox installation — asks whether to run `target.sh` immediately.
+
+### Boot Hash Fix
+- **Priority reordered** (`boot_hash.sh`): `read_vbmeta()` (real block device) now runs before checking the cached `/data/adb/boot_hash` file. Previously, a transient `read_vbmeta()` failure on first boot would write `0000...0000` to the cache, and the cached file permanently blocked re-reading the real partition on subsequent boots. Now: user override → block device → cached fallback → zeros.
+- **`service.sh` guard removed**: the `[ ! -f "/data/adb/boot_hash" ]` guard that skipped setting `ro.boot.vbmeta.digest` from the live block device when cache existed was removed. The digest is always set from the real partition during early boot.
+- **`boot-completed.sh`**: added `_feature_enabled toggle_boot_hardening`, `toggle_boot_hash`, `toggle_security_patch`, `toggle_suspicious_props`, `toggle_rom_spoof` gates — previously ran all boot-time features unconditionally on KSU/APatch, ignoring conflict resolution.
+
+### Conflict Resolution
+- **`apply_conflict_toggles()` now writes both `toggle_*` AND `toggle_action_*`** — previously only wrote `toggle_*`, so the action pipeline (`action.sh`) bypassed conflict resolution entirely. Now when a conflicting module claims a feature, both the boot-time and pipeline toggles are set to 0.
+- **NoHello registry narrowed**: `zygisk_nohello` claims reduced from 7 features to just `boot_hardening` — NoHello only sets boot props; the other 6 phantom claims (`boot_hash`, `security_patch`, `suspicious_props`, `lsposed`, `rom_spoof`, `bootloader_spoofer`) were incorrect and caused Specter features to go missing when NoHello was prioritized.
+- **`refreshControlToggles()`**: added missing `toggle-recovery` entry — the recovery toggle was not synced after a conflict change.
+
+### Feature Script Self-Guards Removed
+- **`boot_hash.sh`** and **`security_patch.sh`**: removed internal `cfg_get toggle_* = "0" && exit 0` guard. These scripts are called from multiple contexts (service, boot-completed, action pipeline) each with their own toggle gate. The self-guard was redundant and wrong — e.g., `toggle_boot_hash=0` would block the action pipeline even when `toggle_action_boot_hash=1`.
+
+### PIF Default Off
+- `toggle_action_pif` now defaults to `0` (disabled) — PIF has its own update mechanism and shouldn't run from Specter's pipeline unless the user explicitly enables it in Control → Action Pipeline.
+- WebUI toggle defaults updated accordingly in both `wireControlToggles` and `refreshControlToggles`.
+
+### Action Pipeline Message
+- Changed misleading `"Meets Strong Integrity with Specter"` to `"Full integrity pipeline completed"` — the pipeline runs the steps but doesn't verify the actual Play Integrity result.
+
+### Early Boot Conflict Resolution
+- **New `post-fs-data.sh`**: runs `resolve_conflicts()` at the earliest boot stage (`post-fs-data`), before other modules' scripts execute. This ensures conflicting modules are renamed to `.bak` before they can set their own boot props.
+- **`service.sh`**: removed duplicate `resolve_conflicts()` call — now handled by `post-fs-data.sh`.
+
+### Translations
+- **Added 24 missing Control page keys** to all 4 translations (ar, zh, ru, es) — the entire "Boot Behavior", "Action Pipeline", and "Conflict Resolution" sections were previously missing from non-English translations.
+- **Fixed `menu_force_clear_desc`** — updated outdated text across all translations to match the new description (Play Store, Chrome, GMS, GSF, Wallet, DroidGuard).
+- **Fixed `update_desc`** — was empty in all 4 translations, now translated.
+- **Fixed `advance_fix_detect_pif`** — removed spurious `(1)` suffix from Chinese and Russian.
+- **Translated previously untranslated keys**: `dialog_cancel`, `tools_danger_zone`, `tools_danger_zone_desc`, `danger_confirm_msg` now localized in all languages.
+- **Translated navbar labels**: `nav_tools` and `nav_control` were still raw English — now localized (tools/control in all 4 languages).
+- **Translated color names**: all 9 `theme_preset_*` color names now localized (ar: أزرق/أحمر/أخضر..., zh: 蓝色/红色/绿色..., ru: Синий/Красный/Зелёный..., es: Azul/Rojo/Verde...).
+- **Translated tool page descriptions**: 25 remaining description keys translated across all languages (Scan & Clean, Customize Per-App Targeting, Filter Blacklisted Apps, Set Custom Keybox, and all supporting texts).
+- **Translated `home_security_patch`** — "Security Patch" label now localized in all 4 languages.
+- **Fixed `danger_confirm`** in Arabic — now translated to متابعة.
+- **Added 26 new i18n keys** for previously hardcoded UI text: file browser (empty state, show all), conflict toasts (Module handles it / Specter handles it), "Priority →" prefix, keybox provider dropdown, custom keybox description, toast messages for blacklist/smartmerge/recovery/detection, time labels (Today at / Yesterday at), history buttons (Copy/Copied/Failed), device status labels (TEE Sim, Not Installed, Private Keybox, Latest, Generic).
+- **Fixed 5 hardcoded English strings** in code: `index.html` (Auto dropdown), `app.ts` (conflict hint + toast), `file-browser.ts` (empty state + show all).
+- All 4 translations now at 180 keys — fully synced with source, no missing or extra keys, no empty values.
+
 ## v1.0.0
 
 ### Architecture

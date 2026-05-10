@@ -2,6 +2,7 @@ import { shellEscape, fetchJson, setText } from './utils.js';
 import { runScript, exec } from './bridge.js';
 import { appendToOutput } from './terminal.js';
 import { API_URLS } from './constants.js';
+import { getTranslation } from './i18n.js';
 import type { InfoJson, KeyboxInfoJson } from './types.js';
 
 export async function initDevice() {
@@ -62,7 +63,7 @@ function applyKeyboxFormat(format: string) {
   const el = document.getElementById('keybox-format');
   if (!el) return;
   if (format === 'locked.xml') {
-    el.textContent = 'TEE Sim';
+    el.textContent = getTranslation('device_tee_sim') || 'TEE Sim';
     el.className = 'keybox-chip keybox-chip--teesim';
     el.style.display = '';
   } else {
@@ -91,7 +92,7 @@ function applyKeyboxStatus(data: KeyboxInfoJson) {
   if (!source || !statusEl || !icon) return;
 
   if (!data.installed) {
-    source.textContent = 'Not Installed';
+    source.textContent = getTranslation('device_not_installed') || 'Not Installed';
     source.className = 'keybox-chip keybox-chip--neutral';
     statusEl.style.display = 'none';
     icon.textContent = 'vpn_key_off';
@@ -101,14 +102,14 @@ function applyKeyboxStatus(data: KeyboxInfoJson) {
   statusEl.style.display = '';
 
   if (data.source === 'Private') {
-    source.textContent = 'Private Keybox';
+    source.textContent = getTranslation('device_private_keybox') || 'Private Keybox';
     source.className = 'keybox-chip keybox-chip--neutral';
     icon.textContent = 'lock';
   } else if (data.source) {
     const name = data.source.charAt(0).toUpperCase() + data.source.slice(1);
     const label = data.text ? `${name} ${data.text}` : name;
     if (data.up_to_date) {
-      source.textContent = label + ' \u00B7 Latest';
+      source.textContent = label + ' \u00B7 ' + (getTranslation('device_latest') || 'Latest');
       source.className = 'keybox-chip keybox-chip--latest';
       icon.textContent = 'verified_user';
     } else {
@@ -117,18 +118,18 @@ function applyKeyboxStatus(data: KeyboxInfoJson) {
       icon.textContent = 'system_update';
     }
   } else {
-    source.textContent = 'Generic';
+    source.textContent = getTranslation('device_generic') || 'Generic';
     source.className = 'keybox-chip keybox-chip--neutral';
     icon.textContent = 'key';
   }
 
   if (data.revoked) {
-    statusEl.textContent = 'Revoked';
+    statusEl.textContent = getTranslation('custom_kb_revoked') || 'Revoked';
     statusEl.className = 'keybox-chip keybox-chip--revoked';
     source.className = 'keybox-chip keybox-chip--revoked';
     icon.textContent = 'gpp_bad';
   } else {
-    statusEl.textContent = 'Active';
+    statusEl.textContent = getTranslation('custom_kb_active') || 'Active';
     statusEl.className = 'keybox-chip keybox-chip--active';
   }
 }

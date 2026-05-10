@@ -35,7 +35,7 @@
       <div class="spacer"></div>
       <span id="network-chip" class="network-chip">
         <md-icon aria-hidden="true">wifi</md-icon>
-        <span id="network-label">Online</span>
+        <span id="network-label" data-i18n="home_status_online">Online</span>
       </span>
       <span id="network-announce" aria-live="polite" class="sr-only"></span>
     </header>
@@ -49,7 +49,7 @@
             <div class="hero-card__body">
               <md-icon id="keybox-icon" style="font-size:28px;font-family:'Material Icons'" aria-hidden="true">key</md-icon>
               <div style="flex:1;display:flex;flex-direction:column;gap:4px">
-                <p class="md-typescale-title-medium" id="keybox-label" style="margin:0">Keybox Status</p>
+                <p class="md-typescale-title-medium" id="keybox-label" style="margin:0" data-i18n="home_keybox_status">Keybox Status</p>
                 <div class="keybox-badges">
                   <span id="keybox-source" class="keybox-chip">—</span>
                   <span id="keybox-status" class="keybox-chip">—</span>
@@ -121,7 +121,7 @@
 
             <div class="kic-provider-row">
               <md-outlined-select id="kb-provider" class="kic-provider-select">
-                <md-select-option value="auto" selected><div slot="headline">Auto</div></md-select-option>
+                <md-select-option value="auto" selected><div slot="headline" data-i18n="kb_provider_auto">Auto</div></md-select-option>
               </md-outlined-select>
             </div>
 

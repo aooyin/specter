@@ -16,11 +16,11 @@ download() {
     fi
 
     for _dl_try in 1 2 3; do
-        if command -v curl >/dev/null 2>&1 && curl --version >/dev/null 2>&1; then
-            curl --connect-timeout 10 -Ls -o "$_dl_output" "$_dl_url" 2>/dev/null && _dl_code=0 && break
-        fi
         if command -v wget >/dev/null 2>&1; then
             wget -T 10 -qO "$_dl_output" "$_dl_url" 2>/dev/null && _dl_code=0 && break
+        fi
+        if command -v curl >/dev/null 2>&1 && curl --version >/dev/null 2>&1; then
+            curl --connect-timeout 10 -Ls -o "$_dl_output" "$_dl_url" 2>/dev/null && _dl_code=0 && break
         fi
         sleep 1
     done
@@ -55,11 +55,11 @@ check_network() {
     done
 
     for _cn_retry in 1 2 3; do
-        if command -v curl >/dev/null 2>&1 && curl --version >/dev/null 2>&1; then
-            curl --connect-timeout 5 -sI "$_cn_endpoint" >/dev/null 2>&1 && PATH="$_cn_oldpath" && unset _cn_oldpath _cn_dns _cn_endpoint _cn_retry && return 0
-        fi
         if command -v wget >/dev/null 2>&1; then
             wget -T 5 --spider "$_cn_endpoint" >/dev/null 2>&1 && PATH="$_cn_oldpath" && unset _cn_oldpath _cn_dns _cn_endpoint _cn_retry && return 0
+        fi
+        if command -v curl >/dev/null 2>&1 && curl --version >/dev/null 2>&1; then
+            curl --connect-timeout 5 -sI "$_cn_endpoint" >/dev/null 2>&1 && PATH="$_cn_oldpath" && unset _cn_oldpath _cn_dns _cn_endpoint _cn_retry && return 0
         fi
         sleep "$_cn_retry"
     done
@@ -543,7 +543,7 @@ CONFLICT_BACKUP_FILE="/data/adb/Specter/conflict_backups.txt"
 
 _conflict_registry() {
   cat <<'EOF'
-zygisk_nohello|NoHello|/data/adb/modules/zygisk_nohello/service.sh|boot_hardening,boot_hash,security_patch,suspicious_props,lsposed,rom_spoof,bootloader_spoofer
+zygisk_nohello|NoHello|/data/adb/modules/zygisk_nohello/service.sh|boot_hardening
 tsupport-advance|TSupport-Advance|/data/adb/modules/tsupport-advance/post-fs-data.sh,/data/adb/modules/tsupport-advance/service.sh|boot_hardening,boot_hash,security_patch,suspicious_props,lsposed,rom_spoof,bootloader_spoofer,target
 vbmeta-fixer|VBMeta-Fixer|/data/adb/modules/vbmeta-fixer/service.sh|boot_hash
 treat_wheel|TreatWheel|/data/adb/modules/treat_wheel/service.sh,/data/adb/modules/treat_wheel/service-or-boot-completed.sh|boot_hardening,rom_spoof,suspicious_props
@@ -657,14 +657,16 @@ EOF
 # Recalculate all Specter toggles based on current conflict priorities
 # Called by WebUI after changing a single module's priority
 apply_conflict_toggles() {
-  if _conflict_claimed "boot_hardening"; then cfg_set toggle_boot_hardening 0; else cfg_set toggle_boot_hardening 1; fi
-  if _conflict_claimed "boot_hash"; then cfg_set toggle_boot_hash 0; else cfg_set toggle_boot_hash 1; fi
-  if _conflict_claimed "security_patch"; then cfg_set toggle_security_patch 0; else cfg_set toggle_security_patch 1; fi
-  if _conflict_claimed "suspicious_props"; then cfg_set toggle_suspicious_props 0; else cfg_set toggle_suspicious_props 1; fi
-  if _conflict_claimed "lsposed"; then cfg_set toggle_lsposed 0; else cfg_set toggle_lsposed 1; fi
-  if _conflict_claimed "rom_spoof"; then cfg_set toggle_rom_spoof 0; else cfg_set toggle_rom_spoof 1; fi
-  if _conflict_claimed "bootloader_spoofer"; then cfg_set toggle_bootloader_spoofer 0; else cfg_set toggle_bootloader_spoofer 1; fi
-  if _conflict_claimed "target"; then cfg_set toggle_target 0; else cfg_set toggle_target 1; fi
+  for _ac_feature in boot_hardening boot_hash security_patch suspicious_props lsposed rom_spoof bootloader_spoofer target; do
+    if _conflict_claimed "$_ac_feature"; then
+      cfg_set "toggle_$_ac_feature" 0
+      cfg_set "toggle_action_$_ac_feature" 0
+    else
+      cfg_set "toggle_$_ac_feature" 1
+      cfg_set "toggle_action_$_ac_feature" 1
+    fi
+  done
+  unset _ac_feature
 }
 
 conflict_status_json() {

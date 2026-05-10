@@ -9,10 +9,6 @@ detect_root_solution
 
 log "SERVICE" "Setting boot properties"
 
-# Resolve conflicts — block/adapt to other modules
-resolve_conflicts
-log "SERVICE" "Conflicts resolved"
-
 _feature_enabled() { [ "$(cfg_get "$1" 1)" != "0" ]; }
 
 # Early boot props (immediate, no wait)
@@ -33,7 +29,7 @@ if _feature_enabled toggle_boot_hash; then
     resetprop -n ro.boot.vbmeta.size "$_vbsize" 2>/dev/null || true
     sp_try ro.boot.vbmeta.hash_alg sha256
     sp_try ro.boot.vbmeta.avb_version 2.0
-    if [ -n "$_vbhash" ] && [ ! -f "/data/adb/boot_hash" ]; then
+    if [ -n "$_vbhash" ]; then
       resetprop -n ro.boot.vbmeta.digest "$_vbhash" 2>/dev/null || true
     fi
   fi

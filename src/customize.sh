@@ -6,15 +6,19 @@ MODDIR="$MODPATH"
 . "$MODPATH/lib/config_env.sh"
 
 _vol() {
-  while true; do
-    _vol_key=$(getevent -qlc 1 2>/dev/null)
-    case "$_vol_key" in
-      *KEY_VOLUMEUP*)   unset _vol_key; return 0 ;;
-      *KEY_VOLUMEDOWN*) unset _vol_key; return 1 ;;
-      *KEY_POWER*)      unset _vol_key; return 2 ;;
-    esac
-    unset _vol_key
-  done
+    _vt="${1:-8}" _vw=0
+    while [ $_vw -lt $_vt ]; do
+        _vk=$(timeout 1 getevent -qlc 1 2>/dev/null)
+        if [ -n "$_vk" ]; then
+            case "$_vk" in
+                *KEY_VOLUMEUP*)   unset _vt _vw _vk; return 0 ;;
+                *KEY_VOLUMEDOWN*) unset _vt _vw _vk; return 1 ;;
+            esac
+        fi
+        _vw=$((_vw + 1))
+    done
+    unset _vt _vw _vk
+    return 2
 }
 
 ui_print ""
@@ -48,7 +52,7 @@ if [ "$_ts_found" = true ]; then
   ui_print ""
   ui_print " Install a keybox?"
   ui_print "  Vol Up   = Yes"
-  ui_print "  Vol Down = No (install later)"
+  ui_print "  Vol Down = No (default in 8s)"
   ui_print ""
 
   _vol; _choice=$?
@@ -56,7 +60,9 @@ if [ "$_ts_found" = true ]; then
     0)
       ui_print "- Installing keybox..."
       if check_network; then
-        download "$KEYBOX_URL" > "$TEMP_FILE"
+        ( download "$KEYBOX_URL" > "$TEMP_FILE" ) & _dl_pid=$!
+        _dl_i=0; while kill -0 $_dl_pid 2>/dev/null && [ $_dl_i -lt 30 ]; do sleep 1; _dl_i=$((_dl_i + 1)); done
+        kill $_dl_pid 2>/dev/null || true; wait $_dl_pid 2>/dev/null || true
 
         if [ ! -f "$TEMP_FILE" ] || [ ! -s "$TEMP_FILE" ]; then
             ui_print "- Error: Keybox download failed. You can upload a keybox manually via the WebUI."
@@ -103,6 +109,23 @@ if [ "$_ts_found" = true ]; then
 fi
 unset _ts_found
 
+ui_print ""
+ui_print " Generate target.txt?"
+ui_print "  Vol Up   = Yes"
+ui_print "  Vol Down = No (default in 8s)"
+ui_print ""
+_vol; _tg_choice=$?
+case $_tg_choice in
+  0)
+    ui_print "- Generating target.txt..."
+    sh "$MODPATH/features/target.sh" && \
+      ui_print "- target.txt generated" || \
+      ui_print "- target.txt generation failed"
+    ;;
+  *)  ui_print "- Skipping target.txt." ;;
+esac
+unset _tg_choice
+
 mkdir -p "$MODPATH/webroot/json"
 RUNTIME_DIR=$(printf '%s' "$MODPATH" | sed 's|/modules_update/|/modules/|')
 
@@ -115,16 +138,17 @@ for _cm_mod in "zygisk_nohello|NoHello" "tsupport-advance|TSupport-Advance" "vbm
   ui_print ""
   ui_print " $_cm_name detected!"
   ui_print "  Vol Up   = Priority → Specter"
-  ui_print "  Vol Down = Priority → $_cm_name"
+  ui_print "  Vol Down = Priority → $_cm_name (default in 8s)"
   ui_print "  (Remove from root manager if you encounter issues)"
   _vol; _cm_choice=$?
 
   case $_cm_choice in
-    0) cfg_set "conflict_$_cm_id" "priority_specter"
-       ui_print "  → Specter takes priority over $_cm_name"
-       ui_print "  (Remove $_cm_name from your root manager if issues persist)" ;;
     1) cfg_set "conflict_$_cm_id" "priority_module"
        ui_print "  → $_cm_name takes priority over Specter" ;;
+    *) cfg_set "conflict_$_cm_id" "priority_specter"
+       ui_print "  → Specter takes priority over $_cm_name"
+       [ $_cm_choice -eq 2 ] && ui_print "  (Timeout — defaulted)"
+       ui_print "  (Remove $_cm_name from your root manager if issues persist)" ;;
   esac
   unset _cm_choice
   # Drain leftover key-up events before next module prompt

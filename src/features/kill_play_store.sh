@@ -8,7 +8,7 @@ log "PLAY_STORE" "Start"
 log "PLAY_STORE" "Force-stopping Play Store"
 
 am force-stop com.android.vending >/dev/null 2>&1 || true
-cmd package trim-caches 999999999 com.android.vending >/dev/null 2>&1 || true
+pm clear com.android.vending >/dev/null 2>&1 || true
 
 log "PLAY_STORE" "Done"
 log "PLAY_STORE" "Finish"

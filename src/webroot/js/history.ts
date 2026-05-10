@@ -37,13 +37,13 @@ function formatTime(isoString: string): string {
     const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
     if (diff < oneDay && date.getDate() === now.getDate()) {
-      return 'Today at ' + timeStr;
+      return (getTranslation('time_today') || 'Today at ') + timeStr;
     }
     if (diff < 2 * oneDay && date.getDate() === new Date(now.getTime() - oneDay).getDate()) {
-      return 'Yesterday at ' + timeStr;
+      return (getTranslation('time_yesterday') || 'Yesterday at ') + timeStr;
     }
     if (date.getFullYear() === now.getFullYear()) {
-      return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' at ' + timeStr;
+      return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + (getTranslation('time_at') || ' at ') + timeStr;
     }
     return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
   } catch (e) { console.warn('Failed to parse date:', e);
@@ -103,7 +103,7 @@ export async function openRecentActivity(devMode = false) {
       </div>
       ${devMode ? `<div class="activity-card__body">
         <pre>${escapeHtml(entry.output)}</pre>
-        <button class="activity-card__copy-btn">Copy</button>
+        <button class="activity-card__copy-btn">${getTranslation('history_copy') || 'Copy'}</button>
       </div>` : ''}
     `;
 
@@ -123,10 +123,10 @@ export async function openRecentActivity(devMode = false) {
 
       copyBtn!.addEventListener('click', () => {
         navigator.clipboard.writeText(entry.output).then(() => {
-          copyBtn!.textContent = 'Copied!';
-          setTimeout(() => { copyBtn!.textContent = 'Copy'; }, 2000);
+          copyBtn!.textContent = getTranslation('history_copied') || 'Copied!';
+          setTimeout(() => { copyBtn!.textContent = getTranslation('history_copy') || 'Copy'; }, 2000);
         }).catch(() => {
-          copyBtn!.textContent = 'Failed';
+          copyBtn!.textContent = getTranslation('history_copy_failed') || 'Failed';
         });
       });
     }

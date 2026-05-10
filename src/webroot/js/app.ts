@@ -17,6 +17,8 @@ import { setFriendlyNames, getFriendlyName } from './state.js';
 import { API_URLS } from './constants.js';
 import type { CatalogJson } from './types.js';
 
+const t = (key: string, fallback: string): string => getTranslation(key) || fallback;
+
 let devMode = false;
 
 async function confirmDestructive(friendlyName: string): Promise<boolean> {
@@ -418,7 +420,6 @@ function wireKeyboxInstallButton() {
 }
 
 async function openCustomKeyboxDialog() {
-  const t = (key: string, fallback: string): string => getTranslation(key) || fallback;
 
   const dialog = document.createElement('md-dialog');
 
@@ -444,10 +445,10 @@ async function openCustomKeyboxDialog() {
           <div class="li-icon"><md-icon>link</md-icon></div>
           <p style="margin:6px 0 2px;font-size:0.8125rem">${t('custom_kb_url', 'URL or Path')}</p>
           <p style="margin:0 0 8px;font-size:0.6875rem;color:var(--md-sys-color-on-surface-variant)">
-            Paste a download URL or enter a device path
+            ${t('custom_kb_desc', 'Paste a download URL or enter a device path')}
           </p>
-          <md-outlined-text-field id="kb-url-input" style="width:100%;--md-outlined-text-field-container-shape:14px;--md-sys-shape-corner-extra-small:14px;border-radius:14px;height:44px" placeholder="https://example.com/keybox.xml or /sdcard/keybox.xml">
-            <md-icon-button slot="trailing-icon" id="kb-paste-btn" aria-label="Paste from clipboard">
+          <md-outlined-text-field id="kb-url-input" style="width:100%;--md-outlined-text-field-container-shape:14px;--md-sys-shape-corner-extra-small:14px;border-radius:14px;height:44px" placeholder="${t('kb_url_placeholder', 'https://example.com/keybox.xml or /sdcard/keybox.xml')}">
+            <md-icon-button slot="trailing-icon" id="kb-paste-btn" aria-label="${t('kb_paste_aria', 'Paste from clipboard')}">
               <md-icon>content_paste</md-icon>
             </md-icon-button>
           </md-outlined-text-field>
@@ -499,7 +500,7 @@ async function openCustomKeyboxDialog() {
     const text = urlInput.value.trim();
 
     if (!text) {
-      showToast('Enter a URL or device path', { icon: 'error', type: 'error' as any, autoCloseDelay: 2500 });
+      showToast(t('toast_enter_url', 'Enter a URL or device path'), { icon: 'error', type: 'error' as any, autoCloseDelay: 2500 });
       return;
     }
 
@@ -549,6 +550,7 @@ async function openCustomKeyboxDialog() {
 
       if (text.startsWith('http://') || text.startsWith('https://')) {
         const result: any = await exec(
+          `wget -qO /data/local/tmp/_kb_check.xml ${shellEscape(text)} 2>/dev/null || ` +
           `curl -s ${shellEscape(text)} > /data/local/tmp/_kb_check.xml 2>/dev/null && ` +
           `. ${moddir}/lib/common.sh && decode_keybox_serial /data/local/tmp/_kb_check.xml`
         );
@@ -626,7 +628,7 @@ async function openCustomKeyboxDialog() {
     } catch (e) {
       console.warn('Keybox detection failed:', e);
       closeToast(detectingToast!);
-      showToast('Failed to detect keybox', { icon: 'error', type: 'error' as any, autoCloseDelay: 3000 });
+      showToast(t('toast_detect_failed', 'Failed to detect keybox'), { icon: 'error', type: 'error' as any, autoCloseDelay: 3000 });
     }
   });
 
@@ -662,7 +664,7 @@ function wireBlacklistToggle() {
   if (saveBtn && input) {
     saveBtn.addEventListener('click', async () => {
       await saveBlacklistContent(input.value);
-      showToast('Blacklist saved', { icon: 'check_circle', type: 'success' as any, autoCloseDelay: 2000 });
+      showToast(t('toast_blacklist_saved', 'Blacklist saved'), { icon: 'check_circle', type: 'success' as any, autoCloseDelay: 2000 });
     });
   }
 
@@ -680,7 +682,7 @@ function wireBlacklistToggle() {
       ].join('\n');
       if (input) input.value = defaults;
       await saveBlacklistContent(defaults);
-      showToast('Blacklist reset to defaults', { icon: 'check_circle', type: 'success' as any, autoCloseDelay: 2000 });
+      showToast(t('toast_blacklist_reset', 'Blacklist reset to defaults'), { icon: 'check_circle', type: 'success' as any, autoCloseDelay: 2000 });
     });
   }
 }
@@ -705,7 +707,7 @@ function wireSmartmergeEditor() {
   if (saveBtn && input) {
     saveBtn.addEventListener('click', async () => {
       await saveSmartmergeContent(input.value);
-      showToast('SmartMerge saved', { icon: 'check_circle', type: 'success' as any, autoCloseDelay: 2000 });
+      showToast(t('toast_smartmerge_saved', 'SmartMerge saved'), { icon: 'check_circle', type: 'success' as any, autoCloseDelay: 2000 });
       editor.style.display = 'none';
     });
   }
@@ -720,13 +722,13 @@ function wireToggles() {
       } else {
         await exec('rm -f /data/adb/Specter/twrp');
       }
-      showToast(recoverySw.selected ? 'Recovery hiding enabled' : 'Recovery hiding disabled', { icon: 'check_circle', type: 'success' as any, autoCloseDelay: 2000 });
+      showToast(recoverySw.selected ? t('toast_recovery_on', 'Recovery hiding enabled') : t('toast_recovery_off', 'Recovery hiding disabled'), { icon: 'check_circle', type: 'success' as any, autoCloseDelay: 2000 });
     });
   }
 }
 
 function wireControlToggles() {
-  const toggles: Array<{ id: string; key: string }> = [
+  const toggles: Array<{ id: string; key: string; default?: string }> = [
     { id: 'toggle-recovery', key: 'toggle_recovery' },
     { id: 'toggle-boot_hardening', key: 'toggle_boot_hardening' },
     { id: 'toggle-bootloader_spoofer', key: 'toggle_bootloader_spoofer' },
@@ -736,13 +738,13 @@ function wireControlToggles() {
     { id: 'toggle-action_target', key: 'toggle_action_target' },
     { id: 'toggle-action_security_patch', key: 'toggle_action_security_patch' },
     { id: 'toggle-action_boot_hash', key: 'toggle_action_boot_hash' },
-    { id: 'toggle-action_pif', key: 'toggle_action_pif' },
+    { id: 'toggle-action_pif', key: 'toggle_action_pif', default: '0' },
   ];
 
-  for (const { id, key } of toggles) {
+  for (const { id, key, default: def } of toggles) {
     const sw = document.getElementById(id) as any;
     if (!sw) continue;
-    cfgGet(key, '1').then(val => { sw.selected = val !== '0'; });
+    cfgGet(key, def || '1').then(val => { sw.selected = val !== '0'; });
     sw.addEventListener('change', () => {
       cfgSet(key, sw.selected ? '1' : '0');
     });
@@ -751,7 +753,8 @@ function wireControlToggles() {
 
 async function refreshControlToggles() {
   cfgInvalidate();
-  const toggles: Array<{ id: string; key: string }> = [
+  const toggles: Array<{ id: string; key: string; default?: string }> = [
+    { id: 'toggle-recovery', key: 'toggle_recovery' },
     { id: 'toggle-boot_hardening', key: 'toggle_boot_hardening' },
     { id: 'toggle-bootloader_spoofer', key: 'toggle_bootloader_spoofer' },
     { id: 'toggle-rom_spoof', key: 'toggle_rom_spoof' },
@@ -760,12 +763,12 @@ async function refreshControlToggles() {
     { id: 'toggle-action_target', key: 'toggle_action_target' },
     { id: 'toggle-action_security_patch', key: 'toggle_action_security_patch' },
     { id: 'toggle-action_boot_hash', key: 'toggle_action_boot_hash' },
-    { id: 'toggle-action_pif', key: 'toggle_action_pif' },
+    { id: 'toggle-action_pif', key: 'toggle_action_pif', default: '0' },
   ];
-  for (const { id, key } of toggles) {
+  for (const { id, key, default: def } of toggles) {
     const sw = document.getElementById(id) as any;
     if (!sw) continue;
-    const val = await cfgGet(key, '1');
+    const val = await cfgGet(key, def || '1');
     sw.selected = val !== '0';
   }
 }
@@ -804,7 +807,7 @@ async function wireConflictToggles() {
     const hint = document.createElement('span');
     hint.className = 'supporting-text';
     hint.id = `conflict-hint-${mod.key}`;
-    hint.textContent = mod.prioritySpecter ? 'Priority → Specter' : `Priority → ${mod.friendlyName}`;
+    hint.textContent = mod.prioritySpecter ? t('conflict_priority_specter', 'Priority → Specter') : `${t('conflict_priority_module', 'Priority →')} ${mod.friendlyName}`;
 
     content.appendChild(label);
     content.appendChild(hint);
@@ -837,11 +840,11 @@ async function wireConflictToggles() {
           throw new Error(String(err));
         }
 
-        hint.textContent = isModule ? `Priority → ${mod.friendlyName}` : 'Priority → Specter';
-        showToast(`${mod.friendlyName}: ${isModule ? 'Module handles it' : 'Specter handles it'}`, { icon: 'check_circle', type: 'success' as any, autoCloseDelay: 2500 });
+        hint.textContent = isModule ? `${t('conflict_priority_module', 'Priority →')} ${mod.friendlyName}` : t('conflict_priority_specter', 'Priority → Specter');
+        showToast(`${mod.friendlyName}: ${isModule ? t('conflict_toast_module_handles', 'Module handles it') : t('conflict_toast_specter_handles', 'Specter handles it')}`, { icon: 'check_circle', type: 'success' as any, autoCloseDelay: 2500 });
         await refreshControlToggles();
       } catch (e) {
-        showToast('Failed to update', { icon: 'error', type: 'error' as any, autoCloseDelay: 3000 });
+        showToast(t('toast_failed_update', 'Failed to update'), { icon: 'error', type: 'error' as any, autoCloseDelay: 3000 });
         sw.selected = !sw.selected;
       } finally {
         sw.disabled = false;
