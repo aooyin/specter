@@ -37,10 +37,10 @@ specter/
 │   │   ├── common.sh                     #   Shared functions: log, download, die,
 │   │   │                                 #   check_prop, resetprop_*, persistprop,
 │   │   │                                 #   hide_recovery_folders, apply_prop_hardening,
-│   │   │                                 #   apply_boot_hardening, read_vbmeta,
+│   │   │                                 #   apply_boot_hardening,
 │   │   │                                 #   version_ge, run_device_info,
 │   │   │                                 #   _parse_serial, decode_keybox_serial,
-│   │   │                                 #   find_kmInstallKeybox, resolve_module_root,
+│   │   │                                 #   find_kmInstallKeybox, hexpatch_deleteprop,
 │   │   │                                 #   check_google_revocation, disable_rom_spoof_engines,
 │   │   │                                 #   decode_keybox_blob
 │   │   ├── config_env.sh                 #   Config persistence: ksud module config with file fallback (cfg_get, cfg_set)
@@ -170,7 +170,7 @@ Boot (KernelSU / APatch):
   → service.sh (late_start service, non-blocking)
     → resolve_conflicts()          (detect + adapt to conflicting modules)
     → apply_boot_props()           (data-driven prop hardening via sp_try)
-    → vbmeta fixer via read_vbmeta() (wrapped in || echo "")
+    → boot_hash.sh (preserves or sets vbmeta.digest from prop/cmdline/config)
     → exits early — boot-completed.sh handles post-boot hardening
   → boot-completed.sh (at ACTION_BOOT_COMPLETED)
     → apply_boot_hardening()       (settings put + resetprop)
@@ -402,7 +402,7 @@ With `set -e` at the top of every boot script, an unguarded `resetprop` failure 
 Safe — uses `sp_try`/`resetprop_if_diff` or explicit `|| echo ""` / `|| true`:
 - `apply_boot_props()` — data-driven loop calling `sp_try()` which has `|| true` on every resetprop
 - All `ro.boot.*`, `ro.build.*`, `ro.debuggable`, `ro.secure`, etc. — via `apply_boot_props()`
-- `read_vbmeta()` — because the caller wraps it in `|| echo ""` before passing through
+- `boot_hash.sh` — because the caller wraps it in `2>/dev/null || true`
 - `resetprop_if_match()` — same guards as `resetprop_if_diff`
 - `apply_boot_hardening()` — every internal command has `|| true`
 
@@ -510,13 +510,13 @@ _is_teesimulator()             # Detect TEESimulator by checking for spoof_build
 ensure_dir()                   # mkdir -p
 _escape_json()                 # Sanitize string for JSON embedding
 version_ge()                   # Semantic version comparison (awk-based)
-read_vbmeta()                  # Read real vbmeta block device → size + sha256 digest (single-pass via dd)
+hexpatch_deleteprop()          # Binary-level prop deletion via magiskboot hexpatch (stealth)
 run_device_info()              # Find and execute device-info.sh across possible paths
 _parse_serial()                # Parse ASN.1 DER-encoded certificate serial
 decode_keybox_serial()         # Extract serial from keybox certificate (base64 → hex → DER)
 check_google_revocation()      # Check keybox serial against Google's attestation endpoint
 find_kmInstallKeybox()         # Locate KmInstallKeybox vendor binary
-resolve_module_root()          # Resolve module root from script path (webroot/common/ support)
+
 disable_rom_spoof_engines()    # Detect and disable ROM spoof engines (pihooks/pixelprops/entryhooks) — data-driven
 block_rom_spoof_engines()      # Background-safe ROM spoof engine blocker (data-driven map, uses sp_persist)
 disable_bootloader_spoofer()   # Detect and remove es.chiteroman.bootloaderspoofer + wppenhacer config (uses cmd or pm fallback)
@@ -731,7 +731,7 @@ Same build + extract version from changelog, create GitHub Release.
 │  │                 ││ │       common.sh              │││    │
 │  │                 ││ │ log, download, die,          │││    │
 │  │                 ││ │ check_prop, resetprop_*,     │││    │
-│  │                 ││ │ persistprop, read_vbmeta,    │││    │
+│  │                 ││ │ persistprop, hexpatch_deleteprop,    │││    │
 │  │                 ││ │ apply_boot_hardening,        │││    │
 │  │                 ││ │ version_ge, run_device_info, │││    │
 │  │                 ││ │ decode_keybox_serial,        │││    │
