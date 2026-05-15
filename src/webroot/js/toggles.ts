@@ -10,13 +10,18 @@ const t = (key: string, fallback: string): string => getTranslation(key) || fall
 export function wireToggles() {
   const recoverySw = document.getElementById('toggle-recovery') as MdSwitch | null;
   if (recoverySw) {
+    cfgGet('toggle_recovery', '1').then(val => {
+      recoverySw.selected = val !== '0';
+    });
     recoverySw.addEventListener('change', async () => {
-      if (recoverySw.selected) {
+      const selected = recoverySw.selected;
+      if (selected) {
         await exec('mkdir -p /data/adb/Specter && touch /data/adb/Specter/twrp');
       } else {
         await exec('rm -f /data/adb/Specter/twrp');
       }
-      showToast(recoverySw.selected ? t('toast_recovery_on', 'Recovery hiding enabled') : t('toast_recovery_off', 'Recovery hiding disabled'), { icon: 'check_circle', type: 'success' as any, autoCloseDelay: 2000 });
+      cfgSet('toggle_recovery', selected ? '1' : '0');
+      showToast(selected ? t('toast_recovery_on', 'Recovery hiding enabled') : t('toast_recovery_off', 'Recovery hiding disabled'), { icon: 'check_circle', type: 'success' as any, autoCloseDelay: 2000 });
     });
   }
 }

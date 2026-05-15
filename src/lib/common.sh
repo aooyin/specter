@@ -485,16 +485,7 @@ disable_bootloader_spoofer() {
 
 CONFLICT_BACKUP_FILE="/data/adb/Specter/conflict_backups.txt"
 
-_conflict_registry() {
-  cat <<'EOF'
-zygisk_nohello|NoHello|/data/adb/modules/zygisk_nohello/service.sh|boot_hardening|passive
-tsupport-advance|TSupport-Advance|/data/adb/modules/tsupport-advance/post-fs-data.sh,/data/adb/modules/tsupport-advance/service.sh|boot_hardening,security_patch,suspicious_props,lsposed,rom_spoof,bootloader_spoofer,target|aggressive
-treat_wheel|TreatWheel|/data/adb/modules/treat_wheel/service.sh,/data/adb/modules/treat_wheel/service-or-boot-completed.sh|boot_hardening|passive
-sensitive_props|Sensitive Props|/data/adb/modules/sensitive_props/service.sh|boot_hardening,suspicious_props|passive
-Yurikey|Yurikey Manager|/data/adb/modules/Yurikey/service.sh|boot_hardening,security_patch,suspicious_props,rom_spoof|aggressive
-integritybox|Integrity Box|/data/adb/modules/playintegrityfix/service.sh|boot_hardening,security_patch,suspicious_props,rom_spoof,bootloader_spoofer,target|aggressive
-EOF
-}
+_conflict_registry() { cat "$MODDIR/config/conflicts.txt" 2>/dev/null || true; }
 
 _conflict_detect() {
   _cd_modid="$1"
@@ -564,14 +555,24 @@ EOF
   unset _mc_old_dir _mc_id _mc_name _mc_scripts _mc_features _mc_type _mc_old_file _mc_current _mc_old_val
 }
 
+_feature_enabled() { [ "$(cfg_get "$1" "${2:-1}")" != "0" ]; }
+
+# Single toggle+conflict check used by boot_core.sh dispatcher
+_feature_should_run() {
+  _fsr_feature="$1"
+  [ "$(cfg_get "toggle_$_fsr_feature" 1)" != "0" ] || return 1
+  _conflict_claimed "$_fsr_feature" && return 1
+  return 0
+}
+
 resolve_conflicts() {
   ensure_dir "$SPECTER_DIR"
   touch "$CONFLICT_BACKUP_FILE" 2>/dev/null || true
 
   migrate_conflict_config
 
-  # Always block BootloaderSpoofer — archived since 2024
-  disable_bootloader_spoofer
+  # Check the toggle — respects user's choice for late-boot re-blocking
+  _feature_enabled toggle_bootloader_spoofer && disable_bootloader_spoofer
 
   while IFS='|' read -r _rc_id _rc_name _rc_scripts _rc_features _rc_type; do
     [ -z "$_rc_id" ] && continue
@@ -585,8 +586,9 @@ resolve_conflicts() {
         log "CONFLICT" "$_rc_name: 100% overlap — disabled, Specter covers all"
         ;;
       passive)
-        # Partial overlap — both coexist, Specter defers its overlapping features
-        log "CONFLICT" "$_rc_name: partial overlap — Specter deferred: $_rc_features"
+        # Partial overlap — both coexist, user decides via WebUI which handles shared features
+        cfg_set "conflict_$_rc_id" "priority_module"
+        log "CONFLICT" "$_rc_name: partial overlap — defaulting to Module priority"
         ;;
     esac
   done <<EOF
@@ -610,7 +612,8 @@ _conflict_claimed() {
     esac
     case "$_cc_type" in
       passive)
-        # Module keeps running — always claim its features
+        # Only claim if user chose module priority — otherwise Specter handles it
+        [ "$(_conflict_choice "$_cc_id")" = "priority_module" ] || continue
         _cc_claimed=0; break
         ;;
       aggressive)
@@ -629,12 +632,19 @@ EOF
 # Recalculate all Specter toggles based on current conflict priorities
 # Called by WebUI after changing a single module's priority
 apply_conflict_toggles() {
-  for _ac_feature in boot_hardening security_patch suspicious_props lsposed rom_spoof bootloader_spoofer target; do
+  # Boot-time toggles
+  for _ac_feature in boot_hardening security_patch suspicious_props lsposed rom_spoof bootloader_spoofer; do
     if _conflict_claimed "$_ac_feature"; then
       cfg_set "toggle_$_ac_feature" 0
-      cfg_set "toggle_action_$_ac_feature" 0
     else
       cfg_set "toggle_$_ac_feature" 1
+    fi
+  done
+  # Action-pipeline toggles (only where action.sh gates)
+  for _ac_feature in target security_patch keybox; do
+    if _conflict_claimed "$_ac_feature"; then
+      cfg_set "toggle_action_$_ac_feature" 0
+    else
       cfg_set "toggle_action_$_ac_feature" 1
     fi
   done

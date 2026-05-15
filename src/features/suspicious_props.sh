@@ -5,7 +5,6 @@ MODDIR=${0%/*}
 . "$MODDIR/../lib/paths.sh"
 . "$MODDIR/../lib/package_list.sh"
 . "$MODDIR/../lib/config_env.sh"
-[ "$(cfg_get toggle_suspicious_props 1)" = "0" ] && exit 0
 
 log "SUSPICIOUS" "Start"
 

@@ -9,32 +9,6 @@ MODDIR=${0%/*}
 . "$MODDIR/lib/config_env.sh"
 detect_root_solution
 
-log "BOOT" "Boot completed - finalizing"
+log "BOOT" "KSU/APatch detected — sourcing unified boot core"
 
-_feature_enabled() { [ "$(cfg_get "$1" "${2:-1}")" != "0" ]; }
-
-_feature_enabled toggle_boot_hardening && apply_boot_hardening
-
-log "BOOT" "Running boot-time features..."
-
-_feature_enabled toggle_security_patch && sh "$MODDIR/features/security_patch.sh" 2>/dev/null || true
-
-disable_bootloader_spoofer
-
-_feature_enabled toggle_suspicious_props && sh "$MODDIR/features/suspicious_props.sh" >/dev/null 2>&1 || true
-
-_feature_enabled toggle_rom_spoof && block_rom_spoof_engines
-
-log "BOOT" "Boot-time features done"
-
-_release=$(getprop ro.build.version.release 2>/dev/null || echo "Unknown")
-if [ -f "$TARGET_FILE" ]; then
-    cfg_set "override.description" "Active | $_release"
-    log "BOOT" "Description set to: Active | $_release"
-else
-    cfg_set "override.description" "Run action button to set up keybox"
-    log "BOOT" "Description set to: Run action button to set up keybox"
-fi
-unset _release
-
-log "BOOT" "Done"
+. "$MODDIR/lib/boot_core.sh"

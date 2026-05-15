@@ -102,7 +102,23 @@ Types: `fix:`, `feat:`, `refactor:`, `chore:`, `docs:`, `test:`
 
 ### Boot Script Safety
 
-- `service.sh` and `boot-completed.sh` run in critical boot phases. Every `resetprop` call must use functions with `2>/dev/null || true` guards — never `check_prop()`.
-- Shared functions from `common.sh` (`apply_prop_hardening()`, `check_prop()`, `disable_rom_spoof_engines()`, `persistprop()`) must NOT be called from boot scripts. They lack error guards or write to persistent storage. A single unguarded failure with `set -e` causes a bootloop.
-- Boot scripts use `apply_boot_props()` (data-driven, uses `sp_try` with full guards) for all early boot property hardening. The only shared functions safe to call are `apply_boot_props`, `resetprop_if_diff`, `resetprop_if_match`, `apply_boot_hardening`, and `hide_recovery_folders` — all internally have `|| true` on every fallible command.
-- `apply_prop_hardening()` is for on-demand use only (called from `cleanup.sh` and WebUI "Clear All Detection Traces" action). Never call it from boot scripts.
+All boot-time features are dispatched from `lib/boot_core.sh`, sourced by both `service.sh` (Magisk) and `boot-completed.sh` (KSU/APatch) after `sys.boot_completed=1`. The ONLY blocking stage is `post-fs-data.sh` (Magisk only, 40s timeout).
+
+**Safe at all boot stages** — every call has `2>/dev/null || true` guards:
+- `apply_boot_props()` — data-driven, uses `sp_try()` with full guards
+- `apply_boot_hardening()` — `settings put` + `resetprop --delete` with `|| true`
+- `hide_recovery_folders()` — file ops only, checks exist first
+- `disable_bootloader_spoofer()` — `pm`/`cmd`/`grep`, every op guarded
+- `_feature_enabled()`, `_feature_should_run()`, `_conflict_claimed()` — config reads only
+
+**Safe only via feature script subprocess** (dispatched with `|| true`, not called inline):
+- `block_rom_spoof_engines()` — uses `sp_persist()` (persistent storage write). Boot core runs it in a background subshell: `( sh features/rom_spoof.sh ) &`. The feature script inherits `set -e` but the exit code is never checked.
+- `hexpatch_deleteprop()` — uses `magiskboot hexpatch` with `resetprop -p --delete` fallback. Called from `features/suspicious_props.sh` with `|| true`.
+
+**Never call from boot scripts** (on-demand only, called from `cleanup.sh` or WebUI):
+- `apply_prop_hardening()` — no inline guards. Can abort with `set -e`.
+- `check_prop()` — no `|| true` on resetprop. Can abort at blocking stage.
+
+**Bootloop risk summary:**
+- `post-fs-data.sh` (blocking, 40s timeout): only calls `resolve_conflicts()` which uses `cfg_get`/`cfg_set` (file reads/writes) and `disable_bootloader_spoofer()` (fully guarded). No unguarded `resetprop`. No bootloop risk.
+- `boot_core.sh` (non-blocking, after boot completed): dispatches feature scripts with `|| true`. Feature script failures are logged and ignored. No bootloop risk.

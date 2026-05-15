@@ -42,12 +42,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   wireKeyboxInstallButton();
   await initI18n();
   await Promise.all([initNetwork(), populateProviders(), loadContributors()]).catch(err => console.warn('Init error:', err));
-  await initDevice();
-  wireTargetApps();
-  wireSecurityPatch();
   wireToggles();
   wireControlToggles();
   wireConflictToggles();
+  await initDevice();
+  wireTargetApps();
+  wireSecurityPatch();
   initRedirect();
   buildFriendlyNames();
   document.addEventListener('languageChanged', () => {

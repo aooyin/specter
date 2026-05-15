@@ -202,5 +202,11 @@
   "update_title": "Actualización y soporte",
   "home_history": "Historial",
   "ta_menu_more": "Más opciones",
-  "sp_placeholder": "YYYY-MM-DD"
+  "sp_placeholder": "YYYY-MM-DD",
+  "control_toggle_security_patch": "Set Security Patch",
+  "control_toggle_security_patch_desc": "Write spoofed security patch date to Tricky Store at boot",
+  "control_toggle_suspicious_props": "Suspicious Props Clean",
+  "control_toggle_suspicious_props_desc": "Scan and delete leftover persistent props from modding tools at boot",
+  "control_toggle_action_keybox": "Install Keybox",
+  "control_toggle_action_keybox_desc": "Download and install a valid keybox from the catalog"
 }
