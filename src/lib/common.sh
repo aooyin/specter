@@ -299,7 +299,33 @@ sys.usb.config|mtp
 sys.usb.adb.disabled|1
 persist.sys.usb.config|none
 service.adb.root|0
+ro.boot.vbmeta.device_state|locked
+ro.boot.verifiedbootstate|green
+ro.boot.flash.locked|1
+ro.boot.veritymode|enforcing
+vendor.boot.verifiedbootstate|green
+vendor.boot.vbmeta.device_state|locked
+ro.vendor.boot.warranty_bit|0
+ro.boot.realmebootstate|green
+ro.boot.realme.lockstate|1
 PROPS
+}
+
+spoof_build_props() {
+  _fb_flavor=$(resetprop ro.build.flavor 2>/dev/null || echo "")
+  case "$_fb_flavor" in
+    *userdebug*) sp_try "ro.build.flavor" "${_fb_flavor%userdebug}user" ;;
+    *eng*)       sp_try "ro.build.flavor" "${_fb_flavor%eng}user" ;;
+  esac
+  unset _fb_flavor
+  for _fb_fp in $(resetprop 2>/dev/null | grep -oE 'ro\..*\.build\.fingerprint' || true); do
+    _fb_val=$(resetprop "$_fb_fp" 2>/dev/null || echo "")
+    case "$_fb_val" in
+      *userdebug*) sp_try "$_fb_fp" "${_fb_val//userdebug/user}" ;;
+      *test-keys*) sp_try "$_fb_fp" "${_fb_val//test-keys/release-keys}" ;;
+    esac
+  done
+  unset _fb_fp _fb_val
 }
 
 _pif_prop() {

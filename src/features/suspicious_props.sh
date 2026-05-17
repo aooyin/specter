@@ -25,6 +25,7 @@ for _entry in $SUSPICIOUS_PROPS; do
       warning)  echo "[WARNING] $_prop = $_value" ;;
       *)        echo "[INFO] $_prop = $_value" ;;
     esac
+    echo "restore|$_prop|$_value" >> "$SPECTER_DIR/slain_props.prop" 2>/dev/null || true
     hexpatch_deleteprop "$_prop"
   fi
 done

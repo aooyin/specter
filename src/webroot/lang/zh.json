@@ -208,5 +208,10 @@
   "control_toggle_suspicious_props": "Suspicious Props Clean",
   "control_toggle_suspicious_props_desc": "Scan and delete leftover persistent props from modding tools at boot",
   "control_toggle_action_keybox": "Install Keybox",
-  "control_toggle_action_keybox_desc": "Download and install a valid keybox from the catalog"
+  "control_toggle_action_keybox_desc": "Download and install a valid keybox from the catalog",
+  "control_toggle_prop_handler": "启动状态属性",
+  "control_toggle_prop_handler_desc": "在启动时重置启动状态属性（vbmeta、verifiedboot、flash.locked）",
+  "sp_fetch": "获取",
+  "sp_fetching": "正在获取最新安全补丁...",
+  "sp_fetched": "已获取最新安全补丁"
 }

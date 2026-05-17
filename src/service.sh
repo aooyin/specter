@@ -10,7 +10,10 @@ detect_root_solution
 log "SERVICE" "Setting early boot properties"
 
 # Early boot props (immediate, no wait — re-applied by boot_core.sh after boot completed)
-apply_boot_props
+if [ "$(cfg_get toggle_prop_handler 1)" != "0" ]; then
+  apply_boot_props
+  spoof_build_props
+fi
 
 # Protect SELinux policy files
 if [ "$(toybox cat /sys/fs/selinux/enforce 2>/dev/null)" = "0" ]; then

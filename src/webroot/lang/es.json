@@ -208,5 +208,10 @@
   "control_toggle_suspicious_props": "Suspicious Props Clean",
   "control_toggle_suspicious_props_desc": "Scan and delete leftover persistent props from modding tools at boot",
   "control_toggle_action_keybox": "Install Keybox",
-  "control_toggle_action_keybox_desc": "Download and install a valid keybox from the catalog"
+  "control_toggle_action_keybox_desc": "Download and install a valid keybox from the catalog",
+  "control_toggle_prop_handler": "Propiedades de estado de inicio",
+  "control_toggle_prop_handler_desc": "Restablecer propiedades de estado de inicio (vbmeta, verifiedboot, flash.locked) al inicio",
+  "sp_fetch": "Obtener",
+  "sp_fetching": "Obteniendo último parche de seguridad...",
+  "sp_fetched": "Último parche de seguridad obtenido"
 }

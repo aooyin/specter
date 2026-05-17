@@ -2,6 +2,7 @@ import { exec } from './bridge.js';
 import { getTranslation } from './i18n.js';
 import { showToast } from './toast.js';
 import { defaultSecurityPatch } from './constants.js';
+import { getModuleDir } from './bridge.js';
 
 const t = (key: string, fallback: string): string => getTranslation(key) || fallback;
 
@@ -16,6 +17,9 @@ export function wireSecurityPatch() {
       <div slot="headline">${t('sp_dialog_title', 'Set Security Patch')}</div>
       <div slot="content" style="min-height:0">
         <md-outlined-text-field id="sp-input" type="text" label="${t('sp_dialog_label', 'Security Patch Date')}" placeholder="YYYY-MM-DD" data-i18n-placeholder="sp_placeholder" maxlength="10" autocapitalize="none" style="width:100%;--md-outlined-text-field-container-shape:14px">
+          <md-icon-button slot="trailing-icon" id="sp-fetch" aria-label="${t('sp_fetch', 'Fetch')}">
+            <md-icon>language</md-icon>
+          </md-icon-button>
           <md-icon-button slot="trailing-icon" id="sp-generate" aria-label="${t('sp_generate', 'Generate')}">
             <md-icon>autorenew</md-icon>
           </md-icon-button>
@@ -33,6 +37,27 @@ export function wireSecurityPatch() {
 
     dialog.querySelector('#sp-generate')!.addEventListener('click', () => {
       input!.value = defaultSecurityPatch();
+    });
+
+    dialog.querySelector('#sp-fetch')!.addEventListener('click', async () => {
+      const moddir = getModuleDir();
+      if (!moddir) {
+        showToast(t('simple_toast_error', 'Failed'), { icon: 'error', type: 'error' as any, autoCloseDelay: 3000 });
+        return;
+      }
+      showToast(t('sp_fetching', 'Fetching latest security patch...'), { icon: 'info', type: 'info' as any, autoCloseDelay: 10000 });
+      try {
+        const { stdout } = await exec(`sh ${moddir}/features/security_patch.sh --fetch 2>/dev/null || echo ""`);
+        const date = stdout.trim();
+        if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+          input!.value = date;
+          showToast(t('sp_fetched', 'Latest security patch fetched'), { icon: 'check_circle', type: 'success' as any, autoCloseDelay: 2500 });
+        } else {
+          showToast(t('simple_toast_error', 'Failed'), { icon: 'error', type: 'error' as any, autoCloseDelay: 3000 });
+        }
+      } catch {
+        showToast(t('simple_toast_error', 'Failed'), { icon: 'error', type: 'error' as any, autoCloseDelay: 3000 });
+      }
     });
 
     dialog.querySelector('#sp-cancel')!.addEventListener('click', () => dialog.close());

@@ -5,6 +5,19 @@ MODDIR=${0%/*}
 . "$MODDIR/../lib/paths.sh"
 . "$MODDIR/../lib/config_env.sh"
 
+case "${1:-}" in
+  --fetch)
+    _sp=$(download "https://source.android.com/docs/security/bulletin/pixel" 2>/dev/null |
+      sed -n 's/.*<td>\([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\)<\/td>.*/\1/p' |
+      head -n 1)
+    if [ -n "$_sp" ]; then
+      echo "$_sp"
+      exit 0
+    fi
+    exit 1
+    ;;
+esac
+
 log "SECURITY_PATCH" "Start"
 
 current_year=$(date +%Y 2>/dev/null) || current_year=$(getprop ro.build.version.release 2>/dev/null | cut -d. -f1) || current_year="2026"
