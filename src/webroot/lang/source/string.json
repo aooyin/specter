@@ -148,8 +148,6 @@
   "advance_set_pif_desc": "Runs Play Integrity Fix auto-update scripts",
   "advance_set_zygisk_desc": "Configures enforce-denylist, memory-type, linker settings",
   "advance_set_zygisk_next_configs": "Set Zygisk Next Configs",
-  "advance_upd_rka": "Update RKA Config",
-  "advance_upd_rka_desc": "Provisions Remote Key Attestation config",
   "advance_scan_clean_props": "Scan & Clean Suspicious Props",
   "advance_scan_clean_props_desc": "Scans for and removes leftover persistent props from modding tools, Xposed, or debug state",
   "advance_wdevinel1": "Fix Widevine L1",
