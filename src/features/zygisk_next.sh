@@ -43,7 +43,11 @@ for _pair in "enforce-denylist:just_umount" "memory-type:anonymous" "linker:buil
     _settled=$((_settled + 1))
     continue
   fi
-  "$SCRIPT_FILE" "$_key" "$_val" 2>/dev/null && _settled=$((_settled + 1)) || log "ZYGISK_NEXT" "Warning: Failed to set $_key"
+  if "$SCRIPT_FILE" "$_key" "$_val" 2>/dev/null; then
+    _settled=$((_settled + 1))
+  else
+    log "ZYGISK_NEXT" "Warning: Failed to set $_key"
+  fi
 done
 unset _pair _key _val _current
 

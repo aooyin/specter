@@ -28,6 +28,7 @@ while IFS= read -r line; do
     unset _toggle
 
     # Parse feature name and optional args
+    # shellcheck disable=SC2086
     set -- $line
     feature="$1"; shift
     _args="$*"
@@ -43,6 +44,7 @@ while IFS= read -r line; do
     fi
 
     log "ORCH" "Running: $feature $_args"
+    # shellcheck disable=SC2086
     if ! sh "$FEATURE_PATH" $_args; then
         die "Pipeline aborted: $feature failed"
     fi

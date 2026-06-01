@@ -22,14 +22,14 @@ if [ "$_usb_dbg" != "0" ]; then
   resetprop -n ro.adb.secure 1
 
   strip_adb_from_usb_config() {
-      local PROP="$1"
-      local VAL="$(resetprop "$PROP")"
-      if [ -n "$VAL" ]; then
-          local NEWVAL="$(echo "$VAL" | sed 's/,adb//g; s/adb,//g; s/^adb$//; s/^adb,//')"
-          if [ -z "$NEWVAL" ]; then
-              resetprop -n "$PROP" "mtp"
-          elif [ "$NEWVAL" != "$VAL" ]; then
-              resetprop -n "$PROP" "$NEWVAL"
+      _strip_prop="$1"
+      _strip_val="$(resetprop "$_strip_prop")"
+      if [ -n "$_strip_val" ]; then
+          _strip_new="$(echo "$_strip_val" | sed 's/,adb//g; s/adb,//g; s/^adb$//; s/^adb,//')"
+          if [ -z "$_strip_new" ]; then
+              resetprop -n "$_strip_prop" "mtp"
+          elif [ "$_strip_new" != "$_strip_val" ]; then
+              resetprop -n "$_strip_prop" "$_strip_new"
           fi
       fi
   }

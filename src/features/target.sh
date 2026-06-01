@@ -95,7 +95,7 @@ case "${1}" in
       while read -r pkg; do
         [ -z "$pkg" ] && continue
         _compute_suffix "$pkg"
-        _append_missing "${pkg}${_suffix}"
+        _append_missing "${pkg}"
       done < "$TEMP_PKGS"
       rm -f "$TEMP_PKGS" "${TEMP_PKGS}.filtered"
     fi
@@ -131,8 +131,8 @@ case "${1}" in
 
       while read -r pkg; do
         [ -z "$pkg" ] && continue
+        _suffix=""
         _compute_suffix "$pkg"
-        echo "${pkg}${_suffix}" >> "$_TMP_TARGET"
         _count=$((_count + 1))
       done < "$TEMP_PKGS"
       rm -f "$TEMP_PKGS" "${TEMP_PKGS}.filtered"

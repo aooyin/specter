@@ -7,7 +7,6 @@ MODDIR=${0%/*}
 
 APK="$MODDIR/../apk/specter.apk"
 PACKAGE="com.dpejoh.specter"
-BOOT_HASH_FILE="/data/adb/boot_hash"
 
 log "TEE" "Start"
 
@@ -37,7 +36,7 @@ _partition_hash=$(vbmeta_digest "$_tee_vbmeta_dev" || true)
 unset _tee_slot _tee_vbmeta_dev
 
 _publish_hash() {
-  local _h="$1" _s="$2"
+  _h="$1" _s="$2"
   echo "$_h" > "$TEE_HASH"
   echo "$_h" > "$VBMETA_DIGEST"
   log "TEE" "Hash: $_h ($_s)"

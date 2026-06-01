@@ -4,6 +4,7 @@ const ALLOWED_HOSTS = [
   'github.com',
   't.me',
   'telegram.me',
+  'myst.website',
 ];
 
 export function initRedirect() {

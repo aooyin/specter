@@ -42,7 +42,7 @@ if [ "$_rf_prefix" != "0" ]; then
     _rf_new_val="$_rf_val"
     for _rf_pref in aosp_ lineage_; do
       case "$_rf_new_val" in
-        "$_rf_pref"*) _rf_new_val="${_rf_new_val#$_rf_pref}" ;;
+        "$_rf_pref"*) _rf_new_val=${_rf_new_val#"$_rf_pref"} ;;
       esac
     done
     [ "$_rf_new_val" != "$_rf_val" ] && resetprop -n "$_rf_build_prop" "$_rf_new_val"

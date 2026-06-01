@@ -3,7 +3,7 @@
 # Read big-endian integer (N bytes, default 8) from file at offset
 _val() {
   local _h
-  _h=$(dd if="$1" bs=1 skip=$2 count=${3:-8} 2>/dev/null \
+  _h=$(dd if="$1" bs=1 skip="$2" count="${3:-8}" 2>/dev/null \
     | od -An -tx1 | tr -d ' \n')
   echo $((16#${_h:-0}))
 }
@@ -23,7 +23,7 @@ emit_vbmeta() {
       _pos=$((_sz - 256 + ${#_prefix} / 2))
       _vb_off=$(_val "$_dev" $((_pos + 20)))
       _vb_sz=$(_val "$_dev" $((_pos + 28)))
-      dd if="$_dev" bs=1 skip=$_vb_off count=$_vb_sz 2>/dev/null
+      dd if="$_dev" bs=1 skip="$_vb_off" count="$_vb_sz" 2>/dev/null
       return 0
       ;;
   esac
@@ -56,9 +56,9 @@ vbmeta_digest() {
     while [ $_pos -lt $_pos_end ]; do
       _tag=$(_val "$_part" $_pos)
       _nbf=$(_val "$_part" $((_pos + 8)))
-      if [ $_tag -eq 4 ]; then
+      if [ "$_tag" -eq 4 ]; then
         _name_sz=$(_val "$_part" $((_pos + 20)) 4)
-        _name=$(dd if="$_part" bs=1 skip=$((_pos + 92)) count=$_name_sz 2>/dev/null)
+        _name=$(dd if="$_part" bs=1 skip=$((_pos + 92)) count="$_name_sz" 2>/dev/null)
         for _d in "/dev/block/by-name/$_name" "/dev/block/bootdevice/by-name/$_name"; do
           emit_vbmeta "$_d" 2>/dev/null && break
         done

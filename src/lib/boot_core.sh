@@ -20,7 +20,11 @@ for _bf in recovery boot_hardening lsposed security_patch adb_disabler rom_finge
 done
 unset _bf _bf_default
 
-_feature_should_run "prop_handler" && sh "$MODDIR/features/boot_state_props.sh" >"$SPECTER_DIR/log/boot_state_props.log" 2>&1 || log "BOOT" "Skipping boot_state_props (disabled by config)"
+if _feature_should_run "prop_handler"; then
+  sh "$MODDIR/features/boot_state_props.sh" >"$SPECTER_DIR/log/boot_state_props.log" 2>&1
+else
+  log "BOOT" "Skipping boot_state_props (disabled by config)"
+fi
 
 log "BOOT" "Boot-time features done"
 

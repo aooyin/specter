@@ -33,9 +33,7 @@ fi
 . "$_root/lib/keybox.sh"
 . "$_root/lib/conflicts.sh"
 
-# Module-local paths (was in paths.sh, consolidated here)
-BBIN="$_root/bin"
+# Module-local paths
 : "${CONFIG_DIR:="$_root/config"}"
-MIGRATION_MARKER="$_root/.migrated"
 
 unset _root

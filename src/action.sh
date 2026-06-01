@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# shellcheck shell=sh
+# shellcheck shell=bash
 MODDIR=${0%/*}
 
 case "$(readlink /proc/$$/exe 2>/dev/null)" in

@@ -13,6 +13,7 @@ export function onHomeShow(cb: () => void) {
 }
 
 export function wireNavigation() {
+  const navBar = document.getElementById('nav-bar');
   const navTabs = document.querySelectorAll('.nav-tab');
   const indicator = document.getElementById('nav-indicator')!;
   const pageIds = ['home-page', 'tools-page', 'control-page', 'settings-page'];
@@ -60,6 +61,7 @@ export function wireNavigation() {
       oldTab.classList.remove('nav-tab--active');
       oldTab.removeAttribute('aria-current');
       oldTab.querySelector('.nav-icon')?.classList.remove('nav-icon--filled');
+      if (navBar) navBar.classList.remove('nav-bar--ring');
     }
     tab.classList.add('nav-tab--active');
     tab.setAttribute('aria-current', 'page');
@@ -87,6 +89,15 @@ export function wireNavigation() {
   }
 
   window.addEventListener('popstate', () => {
+    const openDialog = document.querySelector('md-dialog[open]') as any;
+    if (openDialog) {
+      openDialog.close();
+      if (getCurrentPage() !== 'home-page') {
+        history.pushState(null, '');
+      }
+      return;
+    }
+
     if ((window as any).isOverlayOpen) return;
     exitStatePushed = false;
     if (getCurrentPage() === 'home-page') {
@@ -114,6 +125,34 @@ export function wireNavigation() {
       }
     });
   });
+
+  if (navBar) {
+    let longPressTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const startPress = (e: Event) => {
+      if (e instanceof MouseEvent && e.button !== 0) return;
+      if (longPressTimeout) clearTimeout(longPressTimeout);
+      longPressTimeout = setTimeout(() => {
+        navBar.classList.add('nav-bar--ring');
+      }, 500);
+    };
+
+    const cancelPress = () => {
+      if (longPressTimeout) {
+        clearTimeout(longPressTimeout);
+        longPressTimeout = null;
+      }
+    };
+
+    navBar.addEventListener('mousedown', startPress);
+    navBar.addEventListener('mouseup', cancelPress);
+    navBar.addEventListener('mouseleave', cancelPress);
+
+    navBar.addEventListener('touchstart', startPress, { passive: true });
+    navBar.addEventListener('touchend', cancelPress, { passive: true });
+    navBar.addEventListener('touchcancel', cancelPress, { passive: true });
+    navBar.addEventListener('touchmove', cancelPress, { passive: true });
+  }
 
   window.addEventListener('resize', () => {
     const active = document.querySelector('.nav-tab--active') as HTMLElement | null;

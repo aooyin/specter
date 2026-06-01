@@ -142,9 +142,11 @@ case $_tg_choice in
     ;;
   *)
     ui_print "- Generating target.txt..."
-    sh "$MODPATH/features/target.sh" && \
-      ui_print "- target.txt generated" || \
+    if ! sh "$MODPATH/features/target.sh"; then
       ui_print "- target.txt generation failed"
+    else
+      ui_print "- target.txt generated"
+    fi
     ;;
 esac
 unset _tg_choice

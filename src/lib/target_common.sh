@@ -1,3 +1,4 @@
+# shellcheck shell=sh
 # Shared routines for target.sh and target_merge.sh
 # Source after common.sh, paths.sh, package_list.sh, config_env.sh
 
@@ -18,7 +19,11 @@ _tee_section() {
       fi
       rm -f "$_locked_f"
       printf '%s\n' '[locked.xml]' "$_locked" >> "$_tmp"
-      [ -s "$_tmp" ] && mv -f "$_tmp" "$TARGET_TXT" || rm -f "$_tmp"
+      if [ -s "$_tmp" ]; then
+        mv -f "$_tmp" "$TARGET_TXT"
+      else
+        rm -f "$_tmp"
+      fi
       unset _tmp
     fi
     unset _locked
