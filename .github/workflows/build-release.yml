@@ -5,6 +5,7 @@ on:
   push:
     tags:
       - 'v*'
+      - '[0-9]*'
 
 permissions:
   contents: write
@@ -43,6 +44,7 @@ jobs:
             exit 1
           fi
           TAG="${GITHUB_REF#refs/tags/}"
+          TAG="${TAG#v}"
           if [ "$TAG" != "$VERSION" ]; then
             echo "Tag ($TAG) does not match module.prop version ($VERSION)"
             exit 1
