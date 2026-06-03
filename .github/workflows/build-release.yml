@@ -171,7 +171,7 @@ jobs:
           ver = "${{ steps.version.outputs.version }}"
           with open("changelog.md") as f:
               content = f.read()
-          pattern = re.compile(rf'^(# {re.escape(ver)}\s*.*?)(?=^# v|\Z)', re.MULTILINE | re.DOTALL)
+          pattern = re.compile(rf'^(# v?{re.escape(ver)}\s*.*?)(?=^# v|\Z)', re.MULTILINE | re.DOTALL)
           match = pattern.search(content)
           if match:
               with open("release-notes.md", "w") as out:
