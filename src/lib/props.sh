@@ -42,9 +42,6 @@ sp_persist() {
 }
 
 apply_vbmeta_props() {
-  if [ -f "$VBMETA_DIGEST" ]; then
-    resetprop -n ro.boot.vbmeta.digest "$(cat "$VBMETA_DIGEST")"
-  fi
   resetprop ro.boot.vbmeta.avb_version >/dev/null 2>&1 || resetprop -n ro.boot.vbmeta.avb_version "1.2"
   resetprop ro.boot.vbmeta.hash_alg >/dev/null 2>&1 || resetprop -n ro.boot.vbmeta.hash_alg "sha256"
   resetprop ro.boot.vbmeta.invalidate_on_error >/dev/null 2>&1 || resetprop -n ro.boot.vbmeta.invalidate_on_error "yes"

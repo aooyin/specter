@@ -36,6 +36,7 @@ fi
 log "SERVICE" "Boot-time features done"
 
 sh "$MODDIR/features/tee.sh" >"$SPECTER_DIR/log/boot_tee.log" 2>&1 || true
+sh "$MODDIR/features/boot_hash.sh" >"$SPECTER_DIR/log/boot_hash.log" 2>&1 || true
 
 [ -f "$SPECTER_DIR/rom_spoof_reported" ] && {
   sh "$MODDIR/features/rom_spoof_cleanup.sh" >/dev/null 2>&1 || true

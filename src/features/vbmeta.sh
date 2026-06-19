@@ -28,5 +28,3 @@ else
   fi
 fi
 unset _custom_hash
-
-apply_vbmeta_props
