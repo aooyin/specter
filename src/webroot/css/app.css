@@ -20,6 +20,10 @@ input, textarea, [contenteditable="true"] {
   -webkit-touch-callout: default;
 }
 
+code, pre {
+  font-family: var(--sp-font-mono, 'Courier New', Courier, monospace);
+}
+
 :root[data-theme-resolved="dark"]  { color-scheme: dark; }
 :root[data-theme-resolved="light"] { color-scheme: light; }
 
@@ -430,7 +434,7 @@ section:not([hidden]) {
   background: var(--md-sys-color-surface-container-high);
   border-radius: var(--md-sys-shape-corner-small);
   padding: 10px 12px;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: var(--sp-font-mono, 'Courier New', Courier, monospace);
   font-size: 0.75rem;
   line-height: 1.5;
   color: var(--md-sys-color-on-surface);
@@ -1416,7 +1420,7 @@ md-filled-tonal-button {
   padding: 12px;
   max-height: 60vh;
   overflow-y: auto;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: var(--sp-font-mono, 'Courier New', Courier, monospace);
   font-size: 0.8rem;
   line-height: 1.5;
 }
@@ -1437,6 +1441,7 @@ md-filled-tonal-button {
   background: var(--md-sys-color-surface-container-high);
   border-radius: var(--md-sys-shape-corner-small);
   overflow: hidden;
+  font-family: var(--sp-font-mono, 'Courier New', Courier, monospace);
 }
 
 .output-terminal-header {
@@ -1461,7 +1466,7 @@ md-filled-tonal-button {
 }
 
 .output-terminal-content {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: var(--sp-font-mono, 'Courier New', Courier, monospace);
   font-size: 13px;
   padding: 10px 12px;
   max-height: 40vh;

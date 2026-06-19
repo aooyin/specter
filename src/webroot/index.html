@@ -486,6 +486,29 @@
 
           </md-outlined-card>
 
+          <md-outlined-card class="settings-card">
+            <p class="md-typescale-label-large settings-sublabel" data-i18n="settings_fonts">Fonts</p>
+            <div class="settings-toggle-item">
+              <md-icon aria-hidden="true">text_fields</md-icon>
+              <div class="settings-toggle-content">
+                <div data-i18n="settings_custom_font">Google Sans Font</div>
+                <span class="supporting-text" data-i18n="settings_custom_font_desc">Use Google Sans as the WebUI font</span>
+              </div>
+              <div class="spacer"></div>
+              <md-switch icons id="custom-font-switch" aria-label="Google Sans" data-i18n-aria="settings_custom_font"></md-switch>
+            </div>
+            <md-divider class="settings-divider"></md-divider>
+            <div class="settings-toggle-item">
+              <md-icon aria-hidden="true">terminal</md-icon>
+              <div class="settings-toggle-content">
+                <div data-i18n="settings_mono_font">JetBrains Mono Font</div>
+                <span class="supporting-text" data-i18n="settings_mono_font_desc">Use JetBrains Mono as the monospace font</span>
+              </div>
+              <div class="spacer"></div>
+              <md-switch icons id="mono-font-switch" aria-label="JetBrains Mono" data-i18n-aria="settings_mono_font"></md-switch>
+            </div>
+          </md-outlined-card>
+
           <h2 class="section-pill" data-i18n="settings_advanced">Advanced</h2>
           <md-outlined-card class="settings-card">
             <div class="settings-toggle-item">

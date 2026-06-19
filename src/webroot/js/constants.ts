@@ -5,7 +5,7 @@ export const ONLINE_ENDPOINTS: string[] = [
 ];
 export const STORAGE_KEY: string = 'specter_script_history';
 export const MAX_ENTRIES: number = 240;
-export const API_URLS: Record<string, string> = {
+export const API_URLS: Record<string, string | undefined> = {
   KEY_CATALOG: 'https://rawbin.dpejoh.com/catalog',
   INFO: '/json/info.json',
   KEYBOX_INFO: '/json/keybox_info.json',

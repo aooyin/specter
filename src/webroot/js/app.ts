@@ -73,6 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   import('./gms-ui.js').then(m => m.wireGms()).catch(() => {});
   import('./security-patch-ui.js').then(m => m.wireSecurityPatch()).catch(() => {});
   import('./boot-hash-ui.js').then(m => m.wireBootHash()).catch(() => {});
+  import('./font.js').then(m => m.wireFontToggles()).catch(() => {});
 
   const savedDevMode = await cfgGet('dev_mode', 'false') || 'false';
   setDevMode(savedDevMode === 'true');
@@ -103,6 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initNetwork();
   import('./keybox-ui.js').then(m => m.populateProviders()).catch(() => {});
   loadContributors().catch(() => {});
+  import('./font.js').then(m => m.initFonts()).catch(() => {});
 
   /* Phase 5: Lazy per-tab data */
   wireConflictToggles().catch(() => {});
