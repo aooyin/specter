@@ -1,25 +1,26 @@
-# v1.4.4
+# v1.4.4-15
 
 **New**
-- Pull-to-refresh on App Targeting page
-- Default Mode dialog for target apps (Auto/Leaf/Gen + override switch)
-- Custom boot hash Priority 0 in 4-tier chain; immediate `resetprop` on save
+- Pull-to-refresh on App Targeting page with refresh icon indicator
 - Auto keybox: periodic fetch via scheduler task (disabled by default), interval config dialog
+- Export Logs button in Tools
+- Merge KSU + pm list packages for PTR (accept no labels/icons for newly installed apps)
 
 **Changed**
-- Boot hash chain: Custom → TEE → prop → partition; `vbmeta.sh` deleted, logic merged into `boot_hash.sh`
-- `TEE_HASH` → `TEE_BHASH`; files renamed accordingly
-- Prop Handler dialog: added "TEE Boot Hash", removed "VBMeta Integration"
-- Conflict hints use human-readable names via `FEATURE_I18N_KEYS`
-- Boot hash UI is read-only (no Update cache/save)
-- `toggle-vbmeta` removed from Control; `toggle_autopif` default `0`
-- Auto-target inotify handler simplified; uses `su -c` to bypass KernelSU SELinux restrictions
+- UI overhaul: keyboard overlap fix, remove tap highlights, aesthetics pass
+- Unify boot hash resolution chain, fix TEE history name, immediate resetprop on save
+- App labels resolved via dumpsys for KSU cache misses instead of remote catalog
+- ta-list includes target.txt entries not in pm list so new apps appear after PTR
+- Build scripts: `npm run build:release` for release zips without commit hash; `npm run build` for dev zips with hash
+- `customize.sh`: omit TEE status line when status file missing
 
 **Fixed**
-- Boot hash never applied on first boot (`tee.sh` ran after `boot_hash.sh`)
+- Auto-target not working after clean install — missing toggle `.val` files created on boot
 - Scheduler stale PID check: `kill -0` can match reused PID after reboot; now verifies cmdline
+- inotifyd handler exits when `toggle_auto_target.val` missing — shell default fallback (`${_cg_val:-1}`)
+- Auto-target inotify handler uses `su -c` to bypass KernelSU SELinux restrictions
 
-# v1.4.4.14
+# v1.4.4-14
 
 **Changed**
 - Conflict system rewritten: toggle `.val` files are the single source of truth; `resolve_conflicts()` writes `toggle_<feature>=0` for claimed features; `_feature_should_run()` checks toggle only (removed separate `_conflict_claimed()` gate); conflict section priority switches batch-update toggles
@@ -35,7 +36,7 @@
 - Passive module conflict choices overwritten every boot (user selection wiped on reboot)
 - sha256sum mock recursion in tests (hung for 18s on CI)
 
-# v1.4.4.13
+# v1.4.4-13
 
 **New**
 - `boot_hash.sh`, zero-rejection boot hash priority chain (TS file → TEE → prop → partition)
@@ -54,7 +55,7 @@
 **Improved**
 - Recent activity shows per-script descriptions (e.g. "Keybox: Yuri v54", "TEE normal · 9530...")
 
-# v1.4.4.12
+# v1.4.4-12
 
 **New**
 - BRENE conflict resolution (passive, boot_hardening/prop_handler/boot_hash)
@@ -72,7 +73,7 @@
 - `boot_hash.sh` now called from `service.sh`; redundant digest set removed from `props.sh`
 - TEE & Boot Hash popup uses `boot_hash.sh` priority chain instead of raw TEE hash
 
-# v1.4.4.11
+# v1.4.4-11
 
 **New**
 - TEESimulator-RS auto-download & install on customize.sh when Tricky Store is absent (silent)
@@ -95,7 +96,7 @@
 - Dead `_conflict_claimed` calls from service.sh
 - Redundant `unzip deps/classes.dex`, `keybox_info.sh`, `refresh_module_description` from customize.sh
 
-# v1.4.4.10
+# v1.4.4-10
 
 **New**
 - App icon resolution in target-apps overlay (IntersectionObserver, KernelSU native APIs, fallback SVG)
@@ -114,7 +115,7 @@
 - Remote app catalog API dependency (`rawbin.dpejoh.com/apps`)
 - Separate `checkTeeFunctional()` / `extractBootHash()` methods (merged)
 
-# v1.4.4.09
+# v1.4.4-09
 
 **Breaking**
 - Module ID changed to `specter` (lowercase)
@@ -149,7 +150,7 @@
 - Dead home-page mini-cards, `cfgInvalidate()`/`cfgFlush()` calls
 - Detector app directory cleanup, `getRecentEntries`, `flags` from InfoJson
 
-# v1.4.4.07
+# v1.4.4-07
 
 **Added**
 - Scheduler daemon (keybox_info/6h, auto_target/5min, inotifyd)
@@ -214,6 +215,27 @@
 - GMS targets
 - mksh compatibility
 - keybox_info JSON validity
+
+# v1.4.4
+
+**New**
+- Pull-to-refresh on App Targeting page
+- Default Mode dialog for target apps (Auto/Leaf/Gen + override switch)
+- Custom boot hash Priority 0 in 4-tier chain; immediate `resetprop` on save
+- Auto keybox: periodic fetch via scheduler task (disabled by default), interval config dialog
+
+**Changed**
+- Boot hash chain: Custom → TEE → prop → partition; `vbmeta.sh` deleted, logic merged into `boot_hash.sh`
+- `TEE_HASH` → `TEE_BHASH`; files renamed accordingly
+- Prop Handler dialog: added "TEE Boot Hash", removed "VBMeta Integration"
+- Conflict hints use human-readable names via `FEATURE_I18N_KEYS`
+- Boot hash UI is read-only (no Update cache/save)
+- `toggle-vbmeta` removed from Control; `toggle_autopif` default `0`
+- Auto-target inotify handler simplified; uses `su -c` to bypass KernelSU SELinux restrictions
+
+**Fixed**
+- Boot hash never applied on first boot (`tee.sh` ran after `boot_hash.sh`)
+- Scheduler stale PID check: `kill -0` can match reused PID after reboot; now verifies cmdline
 
 # v1.4.3
 

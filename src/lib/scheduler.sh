@@ -36,7 +36,8 @@ if command -v inotifyd >/dev/null 2>&1 && [ "$(cfg_get toggle_auto_target 1)" = 
 #!/system/bin/sh
 MODDIR='${MODDIR}'
 SPECTER_DIR='${SPECTER_DIR}'
-[ "\$(su -c "cat \${SPECTER_DIR}/config/toggle_auto_target.val" 2>/dev/null)" = "1" ] || exit 0
+_cg_val="\$(su -c "cat \${SPECTER_DIR}/config/toggle_auto_target.val" 2>/dev/null)"
+[ "\${_cg_val:-1}" = "1" ] || exit 0
 su -c "sh \${MODDIR}/features/auto_target.sh" 2>/dev/null || true
 . "\${MODDIR}/lib/desc.sh" 2>/dev/null
 refresh_module_description 2>/dev/null || true

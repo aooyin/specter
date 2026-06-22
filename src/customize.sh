@@ -50,7 +50,6 @@ _tee_val=$(grep -E '^(teeBroken|tee_broken)=' "$TEE_STATUS" 2>/dev/null | cut -d
 case "$_tee_val" in
   true)  ui_print "- TEE: broken" ;;
   false) ui_print "- TEE: normal" ;;
-  *)     ui_print "- TEE: unknown" ;;
 esac
 unset _tee_val
 

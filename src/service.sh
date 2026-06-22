@@ -55,6 +55,15 @@ fi
 . "$MODDIR/lib/desc.sh"
 refresh_module_description
 
+for _tk_pair in toggle_boot_hardening:1 toggle_prop_handler:1 toggle_adb_disabler:0 \
+                toggle_rom_fingerprint:0 toggle_action_gms:1 toggle_action_target:1 \
+                toggle_action_security_patch:1 toggle_action_pif:1 toggle_action_keybox:1 \
+                toggle_auto_target:1 toggle_keybox_info:1 toggle_autopif:0 toggle_autokeybox:0; do
+  _key="${_tk_pair%%:*}"
+  _def="${_tk_pair#*:}"
+  [ -f "$CONFIG_DIR/$_key.val" ] || cfg_set "$_key" "$_def"
+done
+
 [ "$(cfg_get toggle_scheduler 1)" != "0" ] && {
   sh "$MODDIR/lib/scheduler.sh" >"$SPECTER_DIR/log/scheduler.log" 2>&1 &
   log "SERVICE" "Scheduler launched (PID $!)"
