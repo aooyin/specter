@@ -106,7 +106,7 @@ async function fetchUserPackages(): Promise<string[]> {
       for (const p of list) pkgSet.add(p);
     } catch {}
   }
-  const r = await shellExec('pm list packages -3 2>/dev/null | cut -d: -f2');
+  const r = await shellExec(`pm list packages -3 2>/dev/null | cut -d: -f2 #${Date.now()}`);
   for (const pkg of r.stdout.split('\n').map(s => s.trim()).filter(Boolean)) {
     pkgSet.add(pkg);
   }
