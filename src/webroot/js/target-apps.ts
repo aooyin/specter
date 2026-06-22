@@ -100,13 +100,18 @@ async function shellExec(cmd: string): Promise<{ stdout: string }> {
 async function fetchUserPackages(): Promise<string[]> {
   const pkgSet = new Set<string>();
   const ksu = ksuGlobal();
-  if (typeof ksu?.listPackages === 'function') {
+  if (typeof ksu?.listUserPackages === 'function') {
+    try {
+      const list = JSON.parse(ksu.listUserPackages()) as string[];
+      for (const p of list) pkgSet.add(p);
+    } catch {}
+  } else if (typeof ksu?.listPackages === 'function') {
     try {
       const list = JSON.parse(ksu.listPackages('user')) as string[];
       for (const p of list) pkgSet.add(p);
     } catch {}
   }
-  const r = await shellExec(`pm list packages -3 2>/dev/null | cut -d: -f2 #${Date.now()}`);
+  const r = await shellExec('pm list packages -3 2>/dev/null | cut -d: -f2');
   for (const pkg of r.stdout.split('\n').map(s => s.trim()).filter(Boolean)) {
     pkgSet.add(pkg);
   }
@@ -120,19 +125,12 @@ async function resolvePackageNames(packages: string[]): Promise<Map<string, stri
     try {
       const raw = ksu.getPackagesInfo(JSON.stringify(packages));
       const list = JSON.parse(raw) as Array<{ packageName: string; appLabel?: string }>;
-      const missing: string[] = [];
-      for (let i = 0; i < packages.length; i++) {
-        if (list[i]?.appLabel) {
-          map.set(packages[i]!, list[i]!.appLabel!);
-        } else {
-          missing.push(packages[i]!);
-        }
+      for (let i = 0; i < packages.length && i < list.length; i++) {
+        const label = list[i]?.appLabel;
+        map.set(packages[i]!, label && label !== packages[i] ? label : packages[i]!);
       }
-      if (missing.length > 0) {
-        await Promise.all(missing.map(async (pkg) => {
-          const r = await shellExec(`dumpsys package ${pkg} 2>/dev/null | grep -m1 'applicationInfo=' | sed 's/.*label=//' | sed 's/ [a-zA-Z0-9_.-]*=.*//' | tr -d '\\n'`);
-          map.set(pkg, r.stdout.trim() || pkg);
-        }));
+      for (let i = list.length; i < packages.length; i++) {
+        map.set(packages[i]!, packages[i]!);
       }
       return map;
     } catch {}
@@ -573,6 +571,10 @@ export async function openTargetAppsManager() {
 
   async function loadData() {
     try {
+      const ksu = ksuGlobal();
+      if (typeof ksu?.cacheAllPackageIcons === 'function') {
+        try { ksu.cacheAllPackageIcons(48); } catch {}
+      }
       defaultMode = (await cfgGet('target_default_mode', 'bare')) || 'bare';
       const [targetResult, pkgs] = await Promise.all([
         exec(`cat ${TRICKY_DIR}/target.txt 2>/dev/null || echo ""`),
