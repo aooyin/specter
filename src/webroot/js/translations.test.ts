@@ -36,7 +36,7 @@ function report(lang: string): TranslationReport {
   }
 }
 
-const LANGS = ['ar', 'es', 'ru', 'zh']
+const LANGS = ['ar', 'es', 'pl', 'ru', 'tr', 'zh']
 
 describe('translations', () => {
   const reports = LANGS.map(report)
