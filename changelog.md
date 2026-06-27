@@ -1,34 +1,31 @@
 # v1.4.4-16
 
 **New**
-- Turkish + Polish translations; Crowdin CI + validation tests for i18n
-- Random selection from workingEntries for auto keybox
-- Conflict entries for TA_utl / TA_enhanced
-- Bundle inotifyd watcher for instant app detection (arm64/arm32/x86_64/x86)
+- Conflict system: 3-tier (aggressive/moderate/passive), data-driven from conflicts.txt
+- TA_utl/TA_enhanced moved to moderate (no desc warning)
+- pihooks spoof engine detection
+- Turkish + Polish translations
+- Auto keybox random selection from working entries
+- inotifyd watcher for instant app detection
 
 **Changed**
-- Monet preset matching: HSL → HCT (CAM16) via `@material/material-color-utilities`; `presets.json` regenerated with correct MD3 colors; seed in-memory with on-demand re-extract
-- Zygisk Next: dropped `zygiskd` dep, validates module name, writes config files directly
-- ADB disabler: simplified USB config, added dev settings prop
-- History now stores exit code, failed scripts show correct description
-- Logging framework rewritten (level-based API, gzip rotation, configurable verbosity)
-- auto_target cleans stale and blacklisted entries on each run
+- Monet: HSL → HCT (CAM16) color matching
+- Zygisk Next: no `zygiskd` dep, writes config directly
+- Logging: level-based API, gzip rotation
+- auto_target cleans stale/blacklisted entries
+- ADB disabler: simplified USB config
 
 **Fixed**
-- Hundreds of AI mistranslations in ar/es/ru/zh (TEE, ADB, PIF terms)
-- Inotify handler missing MODULES_BASE, wrong module description
-- TEE button not updating cached files in device info
-- `check_tee_bhash.sh` missing paths.sh source
-- Stale translation keys removed, missing keys filled
-- TEE status shows Normal/Broken instead of raw boolean
-- More minor fixes and logging cleanup across all features
+- Hundreds of AI mistranslations (ar/es/ru/zh)
+- Inotify handler missing MODULES_BASE
+- TEE button stale cache
+- TEE status shows Normal/Broken not raw bool
+- Scheduler stale PID false match after reboot
+- Minor fixes across features
 
 **Infrastructure**
-- Shell tests rewritten/expanded to 97 assertions
-- Crowdin weekly sync workflow; `push.sh` parameterized; stale artifacts cleaned
-
-**Removed**
-- PayPal from support
+- 97 shell tests
+- Crowdin CI + weekly sync
 
 # v1.4.4-15
 
