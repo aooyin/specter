@@ -1,4 +1,4 @@
-import { exec, getModuleDir } from './bridge.js';
+import { spawnScript } from './bridge.js';
 import { appendToOutput } from './terminal.js';
 import { showToast } from './toast.js';
 import { showErrorDialog } from './dialog.js';
@@ -35,6 +35,7 @@ async function confirmDestructive(friendlyName: string): Promise<boolean> {
 export async function runAction(scriptName: string) {
   const i18nKey = getFriendlyName(scriptName);
   const friendlyName = getTranslation(i18nKey) || i18nKey;
+  const lines: string[] = [];
   appendToOutput(`> ${friendlyName}`);
   const dialog = document.getElementById('progress-dialog') as MdDialog | null;
   const label = document.getElementById('progress-label');
@@ -43,36 +44,46 @@ export async function runAction(scriptName: string) {
   if (text) text.textContent = getTranslation('simple_dialog_wait') || 'This may take a moment';
   if (dialog) dialog.show();
 
-  try {
-    const moddir = getModuleDir();
-    const scriptPath = moddir ? `${moddir}/features/${scriptName}` : scriptName;
-    const { code, stdout, stderr } = await exec(`sh ${scriptPath}`);
-    const lines = [stdout, stderr].filter(Boolean).join('\n');
-    appendToOutput(lines);
-    appendToOutput(`> ${friendlyName} exited (code: ${code})`);
-    addEntry(scriptName, lines, code ?? 1);
-    if (dialog) dialog.close();
-    if (code !== 0) {
-      const errorMsg = lines.split('\n').find(l => l.includes('Error')) || lines.split('\n').pop() || friendlyName;
-      showToast(`${getTranslation('simple_toast_error') || 'Failed'}: ${errorMsg}`, {
+  return new Promise<void>(resolve => {
+    const child = spawnScript(scriptName, 'feature');
+    child.stdout.on('data', (line: string) => {
+      appendToOutput(line);
+      lines.push(line);
+    });
+    child.stderr.on('data', (line: string) => {
+      appendToOutput(line, true);
+      lines.push('[!] ' + line);
+    });
+    child.on('exit', (code: number) => {
+      const output = lines.join('\n');
+      appendToOutput(`> ${friendlyName} exited (code: ${code})`);
+      addEntry(scriptName, output, code);
+      if (dialog) dialog.close();
+      if (code !== 0) {
+        const errorMsg = lines.find(l => l.includes('Error')) || lines[lines.length - 1] || friendlyName;
+        showToast(`${getTranslation('simple_toast_error') || 'Failed'}: ${errorMsg}`, {
+          icon: 'error', type: 'error',
+          action: getTranslation('simple_toast_view_details') || 'View Details', autoCloseDelay: 8000,
+          onActionClick: () => showErrorDialog(getTranslation('error_dialog_title') || 'Error Details', escapeHtml(output)),
+        });
+      } else {
+        showToast(getTranslation('toast_success') || 'Done', { icon: 'check_circle', type: 'success', autoCloseDelay: 3000 });
+      }
+      resolve();
+    });
+    child.on('error', (err: Error) => {
+      const msg = err.message || getTranslation('simple_toast_error') || 'Failed';
+      appendToOutput(`> Error: ${msg}`, true);
+      addEntry(scriptName, msg, 1);
+      if (dialog) dialog.close();
+      showToast(`${getTranslation('simple_toast_error') || 'Failed'}: ${friendlyName}`, {
         icon: 'error', type: 'error',
         action: getTranslation('simple_toast_view_details') || 'View Details', autoCloseDelay: 8000,
-        onActionClick: () => showErrorDialog(getTranslation('error_dialog_title') || 'Error Details', escapeHtml(lines)),
+        onActionClick: () => showErrorDialog(getTranslation('error_dialog_title') || 'Error Details', escapeHtml(msg)),
       });
-    } else {
-      showToast(getTranslation('toast_success') || 'Done', { icon: 'check_circle', type: 'success', autoCloseDelay: 3000 });
-    }
-  } catch (err: any) {
-    const msg = err?.message || getTranslation('simple_toast_error') || 'Failed';
-    appendToOutput(`> Error: ${msg}`, true);
-    addEntry(scriptName, msg, 1);
-    if (dialog) dialog.close();
-    showToast(`${getTranslation('simple_toast_error') || 'Failed'}: ${friendlyName}`, {
-      icon: 'error', type: 'error',
-      action: getTranslation('simple_toast_view_details') || 'View Details', autoCloseDelay: 8000,
-      onActionClick: () => showErrorDialog(getTranslation('error_dialog_title') || 'Error Details', escapeHtml(msg)),
+      resolve();
     });
-  }
+  });
 }
 
 export function wireActions() {

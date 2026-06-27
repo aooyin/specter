@@ -22,4 +22,15 @@ export interface ScriptResult { success: boolean; output?: string; rawOutput: st
 
 export interface ExecResult { code?: number; stdout: string; stderr: string; }
 
+export type ChildEventCallback = (...args: unknown[]) => void;
+
+export interface ChildProcess {
+  stdout: { on(ev: 'data', fn: (data: string) => void): void; emit(ev: 'data', data: string): void };
+  stderr: { on(ev: 'data', fn: (data: string) => void): void; emit(ev: 'data', data: string): void };
+  on(ev: 'exit', fn: (code: number) => void): void;
+  on(ev: 'error', fn: (err: Error) => void): void;
+  on(ev: string, fn: ChildEventCallback): void;
+  emit(ev: string, ...args: unknown[]): void;
+}
+
 declare global { interface Window { ksu: KsuBridge; isOverlayOpen: boolean; } }

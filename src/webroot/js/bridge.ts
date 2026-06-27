@@ -1,6 +1,6 @@
 import { shellEscape, setGlobal, deleteGlobal, BridgeError, TimeoutError, ScriptError } from './utils.js';
 import { EXEC_TIMEOUT_MS } from './constants.js';
-import type { ModulePaths, ScriptResult, ExecResult, PackageInfo } from './types.js';
+import type { ModulePaths, ScriptResult, ExecResult, PackageInfo, ChildProcess } from './types.js';
 
 let MODULE: ModulePaths | null = null;
 
@@ -95,4 +95,50 @@ export function exec(command: string): Promise<ExecResult> {
     try { window.ksu.exec(command, '{}', globalName); }
     catch (e) { clearTimeout(timer); deleteGlobal(globalName); reject(e); }
   });
+}
+
+function createChildProcess(): ChildProcess {
+  const cbs: Record<string, Function[]> = { stdout: [], stderr: [], exit: [], error: [] };
+  const getCbs = (k: string) => cbs[k]!;
+  return {
+    stdout: {
+      on(ev: 'data', fn: (data: string) => void) { if (ev === 'data') getCbs('stdout').push(fn); },
+      emit(ev: 'data', data: string) { if (ev === 'data') getCbs('stdout').forEach(fn => fn(data)); },
+    },
+    stderr: {
+      on(ev: 'data', fn: (data: string) => void) { if (ev === 'data') getCbs('stderr').push(fn); },
+      emit(ev: 'data', data: string) { if (ev === 'data') getCbs('stderr').forEach(fn => fn(data)); },
+    },
+    on(ev: string, fn: Function) { const a = getCbs(ev); if (a) a.push(fn); },
+    emit(ev: string, ...args: unknown[]) { const a = getCbs(ev); if (a) a.forEach(fn => fn(...args)); },
+  };
+}
+
+export function spawnScript(scriptName: string, type = 'feature'): ChildProcess {
+  const child = createChildProcess();
+  if (!window.ksu?.exec) { setTimeout(() => (child as any).emit('error', new BridgeError('NO_BRIDGE', 'no-bridge'))); return child; }
+  if (!MODULE) { setTimeout(() => (child as any).emit('error', new BridgeError('NO_MODULE', 'no-module-path'))); return child; }
+
+  const scriptPath = scriptDir(type) + scriptName;
+
+  if (typeof window.ksu?.spawn === 'function') {
+    const globalName = genCallbackName();
+    setGlobal(globalName, child);
+    (child as any).on('exit', () => deleteGlobal(globalName));
+    (child as any).on('error', () => deleteGlobal(globalName));
+    try { window.ksu.spawn('sh', JSON.stringify([scriptPath]), '{}', globalName); }
+    catch (e) { deleteGlobal(globalName); setTimeout(() => (child as any).emit('error', e)); }
+  } else {
+    const cmd = `sh ${shellEscape(scriptPath)}`;
+    let timedOut = false;
+    const t = setTimeout(() => { timedOut = true; (child as any).emit('error', new TimeoutError()); }, EXEC_TIMEOUT_MS);
+    exec(cmd).then(({ code, stdout, stderr }) => {
+      if (timedOut) return;
+      clearTimeout(t);
+      if (stdout) stdout.split('\n').forEach(l => l && (child as any).stdout.emit('data', l));
+      if (stderr) stderr.split('\n').forEach(l => l && (child as any).stderr.emit('data', l));
+      if (typeof code === 'number') (child as any).emit('exit', code);
+    }).catch(e => { if (!timedOut) { clearTimeout(t); (child as any).emit('error', e); } });
+  }
+  return child;
 }

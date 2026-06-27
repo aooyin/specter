@@ -1,4 +1,5 @@
-import { exec, getModuleDir } from './bridge.js';
+import { spawnScript } from './bridge.js';
+import { appendToOutput } from './terminal.js';
 import { getTranslation } from './i18n.js';
 import { showToast } from './toast.js';
 import { addEntry } from './history.js';
@@ -8,43 +9,44 @@ export function wireTeeHash() {
   const btn = document.getElementById('tee-hash-btn');
   if (!btn) return;
 
-  btn.addEventListener('click', async () => {
+  btn.addEventListener('click', () => {
     const progress = document.getElementById('progress-dialog') as MdDialog | null;
     const label = document.getElementById('progress-label');
     if (label) label.textContent = t('check_tee_hash', 'TEE & Boot Hash');
     progress?.show();
 
-    try {
-      const moddir = getModuleDir();
-      const scriptPath = moddir ? `${moddir}/webroot/common/check_tee_bhash.sh` : 'check_tee_bhash.sh';
-      const { code, stdout } = await exec(`sh ${scriptPath}`);
-      const lines = (stdout || '').split('\n').filter(Boolean);
-
+    const lines: string[] = [];
+    const child = spawnScript('check_tee_bhash.sh', 'common');
+    child.stdout.on('data', (line: string) => {
+      appendToOutput(line);
+      lines.push(line);
+    });
+    child.on('exit', (code: number) => {
       progress?.close();
-
-      if (code !== 0 && !lines.length) {
+      const clean = lines.filter(l => l.includes('='));
+      if (code !== 0 && !clean.length) {
         showToast(t('simple_toast_error', 'Failed'), { icon: 'error', type: 'error', autoCloseDelay: 3000 });
+        addEntry('check_tee_bhash.sh', lines.join('\n'), code);
         return;
       }
-
       const params: Record<string, string> = {};
-      for (const kv of lines) {
+      for (const kv of clean) {
         const m = kv.match(/^(\w+)=(.+)$/);
         if (m) params[m[1]!] = m[2]!.trim();
       }
-
-      const teeStatus = params['tee_status'] || 'unknown';
-      const teeHash = params['tee_bhash'] || '';
-      const vbmetaHash = params['vbmeta_hash'] || '';
-      const bootHash = params['boot_hash'] || '';
-      const teeTier = params['tee_tier'] || '';
-
-      showResultDialog(teeStatus, teeHash, bootHash, vbmetaHash, teeTier);
-      addEntry('check_tee_bhash.sh', stdout || '', code ?? 1);
-    } catch {
+      showResultDialog(
+        params['tee_status'] || 'unknown',
+        params['tee_bhash'] || '',
+        params['boot_hash'] || '',
+        params['vbmeta_hash'] || '',
+        params['tee_tier'] || '',
+      );
+      addEntry('check_tee_bhash.sh', lines.join('\n'), code);
+    });
+    child.on('error', () => {
       progress?.close();
       showToast(t('simple_toast_error', 'Failed'), { icon: 'error', type: 'error', autoCloseDelay: 3000 });
-    }
+    });
   });
 }
 
